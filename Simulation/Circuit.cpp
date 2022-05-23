@@ -15,7 +15,7 @@ Circuit::Circuit()
     m_ground = nullptr;
     m_mat = nullptr;
     m_maxIterations = 64;
-    m_maxAcceptableError = 1e-6;
+    m_maxAcceptableError = 1e-12;
     m_solved = false;
 }
 
@@ -180,6 +180,7 @@ void Circuit::tick(double time, double deltaTime)
         solve();
     }
 #ifdef QT_DEBUG
-    qDebug() << "Unacceptable Error! Please increase Max Iterations or reduce Max Acceptable Error.";
+    if (m_maxAcceptableError >= 0)
+        qDebug() << "Unacceptable Error! Please increase Max Iterations or reduce Max Acceptable Error.";
 #endif
 }

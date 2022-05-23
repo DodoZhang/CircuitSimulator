@@ -19,6 +19,7 @@ SOURCES += \
     Simulation/Elements/Diode.cpp \
     Simulation/Elements/FunctionGenerator.cpp \
     Simulation/Elements/Inductor.cpp \
+    Simulation/Elements/MOSFET.cpp \
     Simulation/Elements/Resistance.cpp \
     Simulation/Elements/VoltageSource.cpp \
     Simulation/Net.cpp \
@@ -38,6 +39,7 @@ HEADERS += \
     Simulation/Elements/Diode.h \
     Simulation/Elements/FunctionGenerator.h \
     Simulation/Elements/Inductor.h \
+    Simulation/Elements/MOSFET.h \
     Simulation/Elements/Resistance.h \
     Simulation/Elements/VoltageSource.h \
     Simulation/Net.h \

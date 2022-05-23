@@ -32,7 +32,7 @@ public:
     void iterate(double time, double deltaTime) override;
     double error() override;
     double current(double voltage) const;
-    double acResistance(double voltage) const;
+    double acConductivity(double voltage) const;
 };
 
 } // namespace CirSim
