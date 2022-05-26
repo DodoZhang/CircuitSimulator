@@ -9,6 +9,10 @@ CONFIG += c++11
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    Graphic/EditorElement.cpp \
+    Graphic/EditorWidget.cpp \
+    Graphic/EditorWire.cpp \
+    Graphic/Elements/EditorResistance.cpp \
     Graphic/OscilloscopeWidget.cpp \
     Graphic/ParametersInputWidget.cpp \
     InfixExpression.cpp \
@@ -28,6 +32,10 @@ SOURCES += \
     MainWindow.cpp
 
 HEADERS += \
+    Graphic/EditorElement.h \
+    Graphic/EditorWidget.h \
+    Graphic/EditorWire.h \
+    Graphic/Elements/EditorResistance.h \
     Graphic/OscilloscopeWidget.h \
     Graphic/ParametersInputWidget.h \
     InfixExpression.h \

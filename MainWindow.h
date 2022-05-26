@@ -10,6 +10,7 @@ class Pin;
 class Net;
 }
 
+class EditorWidget;
 class OscilloscopeWidget;
 
 typedef struct
@@ -35,7 +36,10 @@ protected:
     CirSim::Circuit *m_circuit;
     QList<CurrentProbe> m_currentProbes;
     QList<VoltageProbe> m_voltageProbes;
+    EditorWidget *m_editor;
     OscilloscopeWidget *m_oscilloscope;
+    QDockWidget *m_oscilloscopeDock;
+    QDockWidget *m_inspectorDock;
 
 private:
     qint64 m_realTime;
@@ -46,6 +50,7 @@ public:
     ~MainWindow();
 
 protected:
+    void contextMenuEvent(QContextMenuEvent *event) override;
     void timerEvent(QTimerEvent *event) override;
 
 public slots:

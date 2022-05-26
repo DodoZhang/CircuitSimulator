@@ -28,8 +28,8 @@ Net *Pin::net() const
     return m_net;
 }
 
-void Pin::connect(Pin *pin) const
+void Pin::connect(Pin *pin)
 {
-    m_net->merge(pin->m_net);
+    m_net = Net::merge(m_net, pin->m_net);
     pin->m_net = m_net;
 }

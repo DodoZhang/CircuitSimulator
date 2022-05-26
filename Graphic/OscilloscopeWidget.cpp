@@ -23,6 +23,7 @@ OscilloscopeWidget::OscilloscopeWidget(QWidget *parent)
 
     setWindowTitle(tr("Oscilloscope"));
     setAttribute(Qt::WA_OpaquePaintEvent);
+    setMinimumWidth(m_divw);
     connect(m_inspector, &ParametersInputWidget::parameterChanged, this, &OscilloscopeWidget::parameterChanged);
 
     parameterChanged(&m_signalCount);
@@ -55,6 +56,7 @@ void OscilloscopeWidget::resizeEvent(QResizeEvent *event)
 void OscilloscopeWidget::initializePixmap()
 {
     QPainter painter(m_pixmap);
+    painter.setPen(QColor(32, 32, 32));
     painter.setBrush(QBrush(QColor(32, 32, 32)));
     painter.drawRect(0, 0, width(), height());
     painter.setPen(QPen(QColor(192, 192, 192), 2));
@@ -176,7 +178,11 @@ void OscilloscopeWidget::parameterChanged(void *parameter)
             m_inspector->removeParameter(signalLabel);
         }
     }
-    else if (parameter == &m_divw || parameter == &m_divh) initializePixmap();
+    else if (parameter == &m_divw || parameter == &m_divh)
+    {
+        setMinimumWidth(m_divw);
+        initializePixmap();
+    }
     else if (parameter == &m_tpdiv) initializePixmap();
     update();
 }

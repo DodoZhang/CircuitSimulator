@@ -2,6 +2,10 @@
 
 #include <QDockWidget>
 #include <QDateTime>
+#include <QMenu>
+#include <QContextMenuEvent>
+
+#include "Graphic/EditorWidget.h"
 
 #include "Simulation/Circuit.h"
 #include "Simulation/Elements/FunctionGenerator.h"
@@ -31,16 +35,18 @@ MainWindow::MainWindow(QWidget *parent)
     auto *S = new CirSim::FunctionGenerator(m_circuit, "5 * cos(3.1415926 * (t % 64) * (t % 64) / 64)");
     auto *C = new CirSim::Capacity(m_circuit, 0.1);
     auto *L = new CirSim::Inductor(m_circuit, 2.5);
+    auto *W = new CirSim::Resistance(m_circuit, 0);
     auto *RC = new CirSim::Resistance(m_circuit, 5);
     auto *RL = new CirSim::Resistance(m_circuit, 5);
 
+    m_circuit->setGround(S->pin(S->Negative)->net());
     S->pin(S->Positive)->connect(RC->pin(0));
-    S->pin(S->Positive)->connect(RL->pin(0));
+    S->pin(S->Positive)->connect(W->pin(0));
+    W->pin(1)->connect(RL->pin(0));
     RC->pin(1)->connect(C->pin(0));
     RL->pin(1)->connect(L->pin(0));
     C->pin(1)->connect(S->pin(S->Negative));
     L->pin(1)->connect(S->pin(S->Negative));
-    m_circuit->setGround(S->pin(S->Negative)->net());
 
     m_currentProbes.append(CurrentProbe { C->pin(0), "iC" });
     m_currentProbes.append(CurrentProbe { L->pin(0), "iL" });
@@ -48,9 +54,15 @@ MainWindow::MainWindow(QWidget *parent)
     m_voltageProbes.append(VoltageProbe { C->pin(0)->net(), "vC" });
     m_voltageProbes.append(VoltageProbe { L->pin(0)->net(), "vL" });
 
+    m_editor = new EditorWidget(this);
+    setCentralWidget(m_editor);
+    m_oscilloscopeDock = new QDockWidget(this);
     m_oscilloscope = new OscilloscopeWidget(this);
-    setCentralWidget(m_oscilloscope);
-    QDockWidget *dockWidget = new QDockWidget(this);
+    m_oscilloscopeDock->setWidget(m_oscilloscope);
+    m_oscilloscopeDock->setFloating(true);
+    m_oscilloscopeDock->resize(800, 600);
+    m_oscilloscopeDock->hide();
+    m_inspectorDock = new QDockWidget(this);
     m_oscilloscope->inspectorWidget()->setParameter("Signal Count", "3");
     m_oscilloscope->inspectorWidget()->setParameter("t/div", "1");
     m_oscilloscope->inspectorWidget()->setParameter("Signal 1//Value", "vS");
@@ -61,11 +73,11 @@ MainWindow::MainWindow(QWidget *parent)
     m_oscilloscope->inspectorWidget()->setParameter("Signal 3//Value", "iL");
     m_oscilloscope->inspectorWidget()->setParameter("Signal 3//v/div", "1");
     m_oscilloscope->inspectorWidget()->setParameter("Signal 3//Color", "64, 128, 255");
-    dockWidget->setWidget(m_oscilloscope->inspectorWidget());
-    dockWidget->setFloating(true);
-    dockWidget->show();
+    m_inspectorDock->setWidget(m_oscilloscope->inspectorWidget());
+    m_inspectorDock->setFloating(true);
+    m_inspectorDock->hide();
 
-    startSimulation();
+//    startSimulation();
 }
 
 MainWindow::~MainWindow()
@@ -73,6 +85,18 @@ MainWindow::~MainWindow()
     endSimulation();
     delete m_timer;
     // TODO release other resources;
+}
+
+void MainWindow::contextMenuEvent(QContextMenuEvent *event)
+{
+    QMenu menu(this);
+    if (m_inspectorDock->isHidden()) menu.addAction(tr("Show Inspector"), m_inspectorDock, &QDockWidget::show);
+    else menu.addAction(tr("Hide Inspector"), m_inspectorDock, &QDockWidget::hide);
+    if (m_oscilloscopeDock->isHidden()) menu.addAction(tr("Show Oscilloscope"), m_oscilloscopeDock, &QDockWidget::show);
+    else menu.addAction(tr("Hide Oscilloscope"), m_oscilloscopeDock, &QDockWidget::hide);
+    menu.addSeparator();
+    m_editor->createContextMenu(&menu, event->pos());
+    menu.exec(event->globalPos());
 }
 
 void MainWindow::timerEvent(QTimerEvent *event)
@@ -103,6 +127,7 @@ void MainWindow::startSimulation()
     m_realTime = 0;
     m_circuit->solve();
     m_timer->start(m_frameTime, this);
+    m_oscilloscopeDock->show();
 }
 
 void MainWindow::endSimulation()

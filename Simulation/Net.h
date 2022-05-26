@@ -24,7 +24,7 @@ public:
     Circuit *circuit();
     const QVector<Pin *> &pins() const;
 private:
-    void merge(Net *net);
+    static Net *merge(Net *net1, Net *net2);
 };
 
 }

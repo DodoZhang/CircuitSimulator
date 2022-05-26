@@ -7,7 +7,6 @@
 
 #include "InfixExpression.h"
 
-class QTreeWidgetItem;
 class ParametersInputWidget;
 
 class OscilloscopeWidget : public QWidget
@@ -36,10 +35,8 @@ protected:
     QVector<SignalValue *> m_signalValues;
     int m_scanLine;
     double m_time;
-    QPixmap *m_pixmap;
-
-protected:
     ParametersInputWidget *m_inspector;
+    QPixmap *m_pixmap;
 
 public:
     OscilloscopeWidget(QWidget *parent = nullptr);

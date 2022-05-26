@@ -28,11 +28,17 @@ const QVector<Pin *> &Net::pins() const
     return m_pins;
 }
 
-void Net::merge(Net *net)
+Net *Net::merge(Net *net1, Net *net2)
 {
-    for (int i = 0; i < net->m_pins.count(); i ++)
-        net->m_pins[i]->m_net = this;
-    m_pins.append(net->m_pins);
-    net->m_pins.clear();
-    delete net;
+    if (net1 == net2) return net1;
+    if (net2 != net1->m_circuit->ground())
+    {
+        for (int i = 0; i < net2->m_pins.count(); i ++)
+            net2->m_pins[i]->m_net = net1;
+        net1->m_pins.append(net2->m_pins);
+        net2->m_pins.clear();
+        delete net2;
+        return net1;
+    }
+    else return merge(net2, net1);
 }

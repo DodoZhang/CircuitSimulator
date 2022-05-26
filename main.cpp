@@ -8,8 +8,6 @@
 #include "Graphic/OscilloscopeWidget.h"
 #include "Graphic/ParametersInputWidget.h"
 
-using namespace CirSim;
-
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);

@@ -21,7 +21,7 @@ public:
     ~Pin();
     Element *element() const;
     Net *net() const;
-    void connect(Pin *pin) const;
+    void connect(Pin *pin);
 };
 
 }
