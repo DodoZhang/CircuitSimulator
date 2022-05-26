@@ -56,3 +56,10 @@ void FunctionGenerator::tick(double time, double)
     m_parameters.insert("t", time);
     m_cvr[0].offset = m_function.calc(m_parameters);
 }
+
+#ifdef QT_DEBUG
+QString FunctionGenerator::debug()
+{
+    return "Function Generator: U(t) = " + m_function.get() + " (V)";
+}
+#endif

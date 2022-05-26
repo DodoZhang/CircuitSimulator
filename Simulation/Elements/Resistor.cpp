@@ -1,8 +1,8 @@
-#include "Resistance.h"
+#include "Resistor.h"
 
 using namespace CirSim;
 
-Resistance::Resistance(Circuit *circuit, double resistance)
+Resistor::Resistor(Circuit *circuit, double resistance)
     : Element(circuit),
       m_pins { Pin(this, 0), Pin(this, 1) },
       m_cvr { this, this }
@@ -20,32 +20,39 @@ Resistance::Resistance(Circuit *circuit, double resistance)
     m_cvr[1].offset = 0;
 }
 
-int Resistance::pinCount() const
+int Resistor::pinCount() const
 {
     return 2;
 }
 
-Pin *Resistance::pin(int index)
+Pin *Resistor::pin(int index)
 {
     return &m_pins[index];
 }
 
-const Pin *Resistance::pin(int index) const
+const Pin *Resistor::pin(int index) const
 {
     return &m_pins[index];
 }
 
-const CVR *Resistance::cvr(int index) const
+const CVR *Resistor::cvr(int index) const
 {
     return &m_cvr[index];
 }
 
-void Resistance::setResistance(double resistance)
+void Resistor::setResistance(double resistance)
 {
     m_cvr[0].current[0] = resistance;
 }
 
-double Resistance::resistance() const
+double Resistor::resistance() const
 {
     return m_cvr[0].current[0];
 }
+
+#ifdef QT_DEBUG
+QString Resistor::debug()
+{
+    return "Resistance: R = " + QString::number(resistance()) + "Ohm";
+}
+#endif

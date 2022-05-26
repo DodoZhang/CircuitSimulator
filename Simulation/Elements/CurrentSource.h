@@ -28,6 +28,10 @@ public:
 
     void setCurrent(double current);
     double current() const;
+
+#ifdef QT_DEBUG
+    QString debug() override;
+#endif
 };
 
 }

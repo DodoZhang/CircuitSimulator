@@ -1,4 +1,4 @@
-#include "EditorResistance.h"
+#include "EditorResistor.h"
 
 #include <QRect>
 #include <QPainter>
@@ -6,34 +6,34 @@
 #include "Graphic/ParametersInputWidget.h"
 #include "Simulation/Circuit.h"
 #include "Simulation/Pin.h"
-#include "Simulation/Elements/Resistance.h"
+#include "Simulation/Elements/Resistor.h"
 
 using namespace Editor;
 
-Resistance::Resistance(EditorWidget *widget, QPoint position, ElementRotation rotation, double resistance)
+Resistor::Resistor(EditorWidget *widget, QPoint position, ElementRotation rotation)
     : Element(widget, position, rotation)
 {
-    m_resistance = resistance;
+    m_resistance = 1000;
     m_inspector = new ParametersInputWidget();
     m_inspector->addParameter(&m_resistance, QObject::tr("Resisitance"), PIWItemType(double));
 }
 
-Resistance::~Resistance()
+Resistor::~Resistor()
 {
     delete m_inspector;
 }
 
-QRect Resistance::originalRect() const
+QRect Resistor::originalRect() const
 {
     return QRect(-2, -1, 4, 2);
 }
 
-int Resistance::pinCount() const
+int Resistor::pinCount() const
 {
     return 2;
 }
 
-QPoint Resistance::originalPinPos(int index) const
+QPoint Resistor::originalPinPos(int index) const
 {
     switch (index) {
     case 0: return QPoint(-2, 0);
@@ -42,7 +42,7 @@ QPoint Resistance::originalPinPos(int index) const
     }
 }
 
-void Resistance::paintEvent(QPainter *painter)
+void Resistor::paintEvent(QPainter *painter)
 {
     painter->setPen(QPen(QColor(32, 32, 32), 0.125));
     painter->drawLine(-2, 0, -1, 0);
@@ -53,14 +53,14 @@ void Resistance::paintEvent(QPainter *painter)
     painter->drawLine(1, 0, 2, 0);
 }
 
-ParametersInputWidget *Resistance::inspectorWidget()
+ParametersInputWidget *Resistor::inspectorWidget()
 {
     return m_inspector;
 }
 
-QVector<CirSim::Pin *> Resistance::createElement(CirSim::Circuit *circuit)
+QVector<CirSim::Pin *> Resistor::createElement(CirSim::Circuit *circuit)
 {
-    auto *r = new CirSim::Resistance(circuit, m_resistance);
+    auto *r = new CirSim::Resistor(circuit, m_resistance);
     QVector<CirSim::Pin *> pins;
     pins.append(r->pin(0));
     pins.append(r->pin(1));

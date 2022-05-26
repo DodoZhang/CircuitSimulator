@@ -15,6 +15,10 @@ public:
     void setCapacitance(double capacitance);
     double capacitance() const;
     void tick(double time, double deltaTime) override;
+
+#ifdef QT_DEBUG
+    QString debug() override;
+#endif
 };
 
 } // namespace CirSim

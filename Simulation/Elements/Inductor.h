@@ -15,6 +15,10 @@ public:
     void setInductance(double inductance);
     double inductance() const;
     void tick(double time, double deltaTime) override;
+
+#ifdef QT_DEBUG
+    QString debug() override;
+#endif
 };
 
 } // namespace CirSim

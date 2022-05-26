@@ -90,3 +90,10 @@ double Diode::acConductivity(double voltage) const
 {
     return m_ICBO / 26e-3 * exp(voltage / 26e-3);
 }
+
+#ifdef QT_DEBUG
+QString Diode::debug()
+{
+    return "Diode";
+}
+#endif

@@ -27,6 +27,10 @@ public:
     const CVR *cvr(int index) const override;
     void setVoltage(double voltage);
     double voltage() const;
+
+#ifdef QT_DEBUG
+    QString debug() override;
+#endif
 };
 
 }

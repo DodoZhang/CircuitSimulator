@@ -49,3 +49,10 @@ double CurrentSource::current() const
 {
     return m_cvr[0].offset;
 }
+
+#ifdef QT_DEBUG
+QString CurrentSource::debug()
+{
+    return "Current Source: I = " + QString::number(current()) + "A";
+}
+#endif

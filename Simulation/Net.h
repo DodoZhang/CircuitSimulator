@@ -23,7 +23,6 @@ public:
     ~Net();
     Circuit *circuit();
     const QVector<Pin *> &pins() const;
-private:
     static Net *merge(Net *net1, Net *net2);
 };
 

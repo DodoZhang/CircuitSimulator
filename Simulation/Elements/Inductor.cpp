@@ -24,3 +24,10 @@ void Inductor::tick(double, double deltaTime)
 {
     setCurrent(current() + (m_circuit->voltage(pin(0)->net()) - m_circuit->voltage(pin(1)->net())) * deltaTime / m_inductance);
 }
+
+#ifdef QT_DEBUG
+QString Inductor::debug()
+{
+    return "Inductor: L = " + QString::number(m_inductance) + "H, I0 = " + QString::number(current()) + "A";
+}
+#endif

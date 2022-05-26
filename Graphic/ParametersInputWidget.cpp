@@ -140,7 +140,7 @@ QString ParametersInputWidget::display_QString(const void *parameter)
     return *(QString *) parameter;
 }
 
-bool ParametersInputWidget::update_Qstring(void *parameter, const QString &str)
+bool ParametersInputWidget::update_QString(void *parameter, const QString &str)
 {
     *(QString *) parameter = str;
     return true;

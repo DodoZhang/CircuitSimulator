@@ -41,6 +41,11 @@ const QList<Net *> &Circuit::nets() const
     return m_nets;
 }
 
+Net *Circuit::ground()
+{
+    return m_ground;
+}
+
 const Net *Circuit::ground() const
 {
     return m_ground;
@@ -184,3 +189,34 @@ void Circuit::tick(double time, double deltaTime)
         qDebug() << "Unacceptable Error! Please increase Max Iterations or reduce Max Acceptable Error.";
 #endif
 }
+
+#ifdef QT_DEBUG
+QString Circuit::debug()
+{
+    QString str;
+    int i = 0;
+    for (auto iter = m_elements.begin(); iter != m_elements.end(); iter ++, i ++)
+        (*iter)->m_index = i;
+    i = 0;
+    for (auto iter = m_nets.begin(); iter != m_nets.end(); iter ++, i ++)
+        (*iter)->m_index = i;
+    str += "Elements:\n";
+    for (auto iter = m_elements.begin(); iter != m_elements.end(); iter ++)
+        str += QString::number((*iter)->m_index) + " " + (*iter)->debug() + "\n";
+    str += "\nNets:\n";
+    for (auto iter = m_nets.begin(); iter != m_nets.end(); iter ++)
+    {
+        str += QString::number((*iter)->m_index) + ": ";
+        int s = (*iter)->pins().count() - 1;
+        for (int i = 0; i < s; i ++)
+        {
+            str += QString::number((*iter)->pins()[i]->element()->m_index) + "-";
+            str += QString::number((*iter)->pins()[i]->m_index) + ", ";
+        }
+        str += QString::number((*iter)->pins()[s]->element()->m_index) + "-";
+        str += QString::number((*iter)->pins()[s]->m_index) + "\n";
+    }
+    str += "\nGround: " + QString::number(m_ground->m_index);
+    return str;
+}
+#endif

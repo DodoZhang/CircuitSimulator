@@ -192,3 +192,10 @@ double MOSFET::acConductivity(double vGS, double vDS) const
         else return m_Kn * detv * detv * m_lambda;
     }
 }
+
+#ifdef QT_DEBUG
+QString MOSFET::debug()
+{
+    return "MOSFET: Kn = " + QString::number(m_Kn * 1000) + "mA/V";
+}
+#endif

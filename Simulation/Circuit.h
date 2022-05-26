@@ -33,6 +33,7 @@ public:
     void setGround(Net *net);
     const QList<Element *> &elements() const;
     const QList<Net *> &nets() const;
+    Net *ground();
     const Net *ground() const;
 
     bool solve();
@@ -40,6 +41,10 @@ public:
     double voltage(Net *net);
 
     void tick(double time, double deltaTime);
+
+#ifdef QT_DEBUG
+    QString debug();
+#endif
 };
 
 }

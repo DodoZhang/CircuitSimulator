@@ -12,7 +12,9 @@ SOURCES += \
     Graphic/EditorElement.cpp \
     Graphic/EditorWidget.cpp \
     Graphic/EditorWire.cpp \
-    Graphic/Elements/EditorResistance.cpp \
+    Graphic/Elements/EditorGround.cpp \
+    Graphic/Elements/EditorResistor.cpp \
+    Graphic/Elements/EditorVCC.cpp \
     Graphic/OscilloscopeWidget.cpp \
     Graphic/ParametersInputWidget.cpp \
     InfixExpression.cpp \
@@ -24,7 +26,7 @@ SOURCES += \
     Simulation/Elements/FunctionGenerator.cpp \
     Simulation/Elements/Inductor.cpp \
     Simulation/Elements/MOSFET.cpp \
-    Simulation/Elements/Resistance.cpp \
+    Simulation/Elements/Resistor.cpp \
     Simulation/Elements/VoltageSource.cpp \
     Simulation/Net.cpp \
     Simulation/Pin.cpp \
@@ -35,7 +37,9 @@ HEADERS += \
     Graphic/EditorElement.h \
     Graphic/EditorWidget.h \
     Graphic/EditorWire.h \
-    Graphic/Elements/EditorResistance.h \
+    Graphic/Elements/EditorGround.h \
+    Graphic/Elements/EditorResistor.h \
+    Graphic/Elements/EditorVCC.h \
     Graphic/OscilloscopeWidget.h \
     Graphic/ParametersInputWidget.h \
     InfixExpression.h \
@@ -48,7 +52,7 @@ HEADERS += \
     Simulation/Elements/FunctionGenerator.h \
     Simulation/Elements/Inductor.h \
     Simulation/Elements/MOSFET.h \
-    Simulation/Elements/Resistance.h \
+    Simulation/Elements/Resistor.h \
     Simulation/Elements/VoltageSource.h \
     Simulation/Net.h \
     Simulation/Pin.h

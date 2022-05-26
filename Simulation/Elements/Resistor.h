@@ -6,14 +6,14 @@
 
 namespace CirSim {
 
-class Resistance : public Element
+class Resistor : public Element
 {
 protected:
     Pin m_pins[2];
     CVR m_cvr[2];
 
 public:
-    Resistance(Circuit *circuit, double resistance);
+    Resistor(Circuit *circuit, double resistance);
     int pinCount() const override;
     Pin *pin(int index) override;
     const Pin *pin(int index) const override;
@@ -21,6 +21,10 @@ public:
 
     void setResistance(double resistance);
     double resistance() const;
+
+#ifdef QT_DEBUG
+    QString debug() override;
+#endif
 };
 
 } // namespace CirSim

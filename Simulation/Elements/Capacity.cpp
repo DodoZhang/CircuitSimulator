@@ -24,3 +24,10 @@ void Capacity::tick(double, double deltaTime)
 {
     setVoltage(voltage() + m_circuit->current(pin(1)) * deltaTime / m_capacitance);
 }
+
+#ifdef QT_DEBUG
+QString Capacity::debug()
+{
+    return "Capacity: C = " + QString::number(m_capacitance) + "F, U0 = " + QString::number(voltage()) + "V";
+}
+#endif

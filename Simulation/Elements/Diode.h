@@ -33,6 +33,10 @@ public:
     double error() override;
     double current(double voltage) const;
     double acConductivity(double voltage) const;
+
+#ifdef QT_DEBUG
+    QString debug() override;
+#endif
 };
 
 } // namespace CirSim

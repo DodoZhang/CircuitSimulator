@@ -49,3 +49,10 @@ double VoltageSource::voltage() const
 {
     return m_cvr[0].offset;
 }
+
+#ifdef QT_DEBUG
+QString VoltageSource::debug()
+{
+    return "Voltage Source: V = " + QString::number(voltage()) + "V";
+}
+#endif

@@ -63,3 +63,10 @@ double Element::error()
 {
     return 0;
 }
+
+#ifdef QT_DEBUG
+QString Element::debug()
+{
+    return "Unknow Element";
+}
+#endif

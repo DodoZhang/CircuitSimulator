@@ -49,6 +49,10 @@ public:
     double error() override;
     double drainCurrent(double gateVoltage, double drainVoltage) const;
     double acConductivity(double gateVoltage, double drainVoltage) const;
+
+#ifdef QT_DEBUG
+    QString debug() override;
+#endif
 };
 
 } // namespace CirSim

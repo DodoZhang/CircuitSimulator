@@ -1,6 +1,8 @@
 #ifndef ELEMENT_H
 #define ELEMENT_H
 
+#include <QObject>
+
 namespace CirSim {
 
 class Circuit;
@@ -36,6 +38,10 @@ public:
     virtual void tick(double time, double deltaTime);
     virtual void iterate(double time, double deltaTime);
     virtual double error();
+
+#ifdef QT_DEBUG
+    virtual QString debug();
+#endif
 };
 
 }

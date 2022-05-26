@@ -51,7 +51,7 @@ public:
     static QString display_double(const void *parameter);
     static bool update_double(void *parameter, const QString &str);
     static QString display_QString(const void *parameter);
-    static bool update_Qstring(void *parameter, const QString &str);
+    static bool update_QString(void *parameter, const QString &str);
     static QString display_QColor(const void *parameter);
     static bool update_QColor(void *parameter, const QString &str);
     static QString display_InfixExpression(const void *parameter);

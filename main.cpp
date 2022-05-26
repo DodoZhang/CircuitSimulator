@@ -2,11 +2,6 @@
 #include <QDockWidget>
 
 #include "MainWindow.h"
-#include "Simulation/Circuit.h"
-#include "Simulation/Elements/VoltageSource.h"
-#include "Simulation/Elements/Resistance.h"
-#include "Graphic/OscilloscopeWidget.h"
-#include "Graphic/ParametersInputWidget.h"
 
 int main(int argc, char *argv[])
 {

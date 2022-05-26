@@ -44,6 +44,10 @@ public:
     bool setFunction(const QString &function);
     const QString &function() const;
     void tick(double time, double deltaTime) override;
+
+#ifdef QT_DEBUG
+    QString debug() override;
+#endif
 };
 
 } // namespace CirSim
