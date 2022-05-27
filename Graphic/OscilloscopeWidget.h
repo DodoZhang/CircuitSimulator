@@ -43,6 +43,8 @@ public:
     ~OscilloscopeWidget();
     ParametersInputWidget *inspectorWidget();
     void record(double time, const QMap<QString, double> &values = QMap<QString, double>());
+    QJsonObject toJson();
+    void fromJson(const QJsonObject &json);
 
 protected:
     void paintEvent(QPaintEvent *event) override;

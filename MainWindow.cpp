@@ -1,6 +1,8 @@
 #include "MainWindow.h"
 
 #include <QDateTime>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QMenu>
 #include <QContextMenuEvent>
 
@@ -79,6 +81,28 @@ bool MainWindow::isSimulating()
     return m_timer->isActive();
 }
 
+QByteArray MainWindow::serialize()
+{
+    QJsonObject json;
+    QJsonObject simJson;
+    simJson.insert("tick time", m_tickTime);
+    simJson.insert("playback speed", m_playbackSpeed);
+    json.insert("simulation", simJson);
+    json.insert("circuit", m_editor->toJson());
+    json.insert("oscilloscope", m_oscilloscopeDock->oscilloscope()->toJson());
+    return QJsonDocument(json).toJson(QJsonDocument::Compact);
+}
+
+void MainWindow::deserialize(const QByteArray &bytes)
+{
+    QJsonObject json = QJsonDocument::fromJson(bytes).object();
+    QJsonObject simJson = json["simulation"].toObject();
+    m_tickTime = simJson["tick time"].toDouble();
+    m_playbackSpeed = simJson["playback speed"].toDouble();
+    m_editor->fromJson(json["circuit"].toObject());
+    m_oscilloscopeDock->oscilloscope()->fromJson(json["oscilloscope"].toObject());
+}
+
 void MainWindow::contextMenuEvent(QContextMenuEvent *event)
 {
     QMenu menu(this);
@@ -88,6 +112,11 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event)
     else menu.addAction(tr("Hide Oscilloscope"), m_oscilloscopeDock, &QDockWidget::hide);
     menu.addSeparator();
     m_editor->createContextMenu(&menu, event->pos());
+    menu.addSeparator();
+    menu.addAction(tr("serialize"), this, [this]() { qDebug() << serialize(); });
+    menu.addAction(tr("deserialize"), this, [this]() {
+        deserialize("{\"circuit\":{\"current probes\":[{\"element\":2,\"label\":\"IM\",\"pin\":1},{\"element\":3,\"label\":\"IB\",\"pin\":1}],\"elements\":[{\"position\":[15,17],\"rotation\":3,\"type\":\"Source/Ground\"},{\"label\":\"VCC\",\"position\":[37,17],\"rotation\":3,\"type\":\"Source/VCC\",\"voltage\":10},{\"position\":[19,17],\"resistance\":20,\"rotation\":0,\"type\":\"Resistor\"},{\"position\":[29,19],\"resistance\":10,\"rotation\":0,\"type\":\"Resistor\"},{\"position\":[29,15],\"resistance\":10,\"rotation\":0,\"type\":\"Resistor\"}],\"voltage probes\":[{\"label\":\"VS\",\"position\":[33,15]},{\"label\":\"VR\",\"position\":[25,19]}],\"wires\":[{\"begin\":{\"element\":0,\"pin\":0},\"end\":{\"element\":2,\"pin\":0},\"path\":[[15,17],[17,17]]},{\"begin\":{\"element\":2,\"pin\":1},\"end\":{\"element\":4,\"pin\":0},\"path\":[[21,17],[23,17],[25,15],[27,15]]},{\"begin\":{\"element\":2,\"pin\":1},\"end\":{\"element\":3,\"pin\":0},\"path\":[[21,17],[23,17],[25,19],[27,19]]},{\"begin\":{\"element\":4,\"pin\":1},\"end\":{\"element\":1,\"pin\":0},\"path\":[[31,15],[33,15],[35,17],[37,17]]},{\"begin\":{\"element\":3,\"pin\":1},\"end\":{\"element\":1,\"pin\":0},\"path\":[[31,19],[33,19],[35,17],[37,17]]}]},\"oscilloscope\":{\"div size\":[100,100],\"signals\":[{\"color\":[255,128,64],\"v/div\":5,\"value\":\"VR\"},{\"color\":[64,255,128],\"v/div\":1,\"value\":\"IM\"}],\"t/div\":1},\"simulation\":{\"playback speed\":1,\"tick time\":0.0001}}");
+    });
     menu.exec(event->globalPos());
 }
 

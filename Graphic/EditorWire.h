@@ -33,6 +33,8 @@ public:
     bool onWire(QPoint point);
     bool nearWire(float x, float y);
     void updatePath();
+    QJsonObject toJson();
+    void fromJson(const QJsonObject &json);
 };
 
 } // namespace Editor

@@ -1,6 +1,8 @@
 #include "EditorWidget.h"
 
 #include <cmath>
+#include <QJsonObject>
+#include <QJsonArray>
 #include <QPainter>
 #include <QMenu>
 #include <QKeyEvent>
@@ -48,6 +50,23 @@ void EditorWidget::CurrentProbe::paint(QPainter *painter)
     painter->drawText(QRectF(20, -8, 32, 16), Qt::AlignLeft, label);
 }
 
+QJsonObject EditorWidget::CurrentProbe::toJson()
+{
+    QJsonObject json;
+    json.insert("element", element->m_index);
+    json.insert("pin", pin);
+    json.insert("label", label);
+    return json;
+}
+
+EditorWidget::CurrentProbe *EditorWidget::CurrentProbe::fromJson(EditorWidget *editor, const QJsonObject &json)
+{
+    element = editor->m_elements.at(json["element"].toInt());
+    pin = json["pin"].toInt();
+    label = json["label"].toString();
+    return this;
+}
+
 int EditorWidget::VoltageProbe::count = 1;
 
 EditorWidget::VoltageProbe::VoltageProbe(EditorWidget *editor, QPoint pos)
@@ -73,6 +92,22 @@ void EditorWidget::VoltageProbe::paint(QPainter *painter)
     painter->drawText(QRectF(28, -24, 32, 16), Qt::AlignLeft, label);
 }
 
+QJsonObject EditorWidget::VoltageProbe::toJson()
+{
+    QJsonObject json;
+    json.insert("position", QJsonArray { pos.x(), pos.y() });
+    json.insert("label", label);
+    return json;
+}
+
+EditorWidget::VoltageProbe *EditorWidget::VoltageProbe::fromJson(const QJsonObject &json)
+{
+    QJsonArray posJson = json["position"].toArray();
+    pos = QPoint(posJson[0].toInt(), posJson[1].toInt());
+    label = json["label"].toString();
+    return this;
+}
+
 EditorWidget::EditorWidget(MainWindow *parent) : QWidget(parent)
 {
     m_posx = m_posy = 0;
@@ -94,6 +129,10 @@ EditorWidget::EditorWidget(MainWindow *parent) : QWidget(parent)
     m_inspector = new ParametersInputWidget();
     m_inspector->addParameter(&parent->m_tickTime, tr("Tick Time"), PIWItemType(double));
     m_inspector->addParameter(&parent->m_playbackSpeed, tr("Playback Speed"), PIWItemType(double));
+
+    Editor::Element::registerElement<Editor::Ground>(tr("Source/Ground"));
+    Editor::Element::registerElement<Editor::VCC>(tr("Source/VCC"));
+    Editor::Element::registerElement<Editor::Resistor>(tr("Resistor"));
 }
 
 EditorWidget::~EditorWidget()
@@ -102,6 +141,77 @@ EditorWidget::~EditorWidget()
     delete m_inspector;
     for (auto iter = m_currentProbes.begin(); iter != m_currentProbes.end(); iter ++) delete *iter;
     for (auto iter = m_voltageProbes.begin(); iter != m_voltageProbes.end(); iter ++) delete *iter;
+}
+
+QJsonObject EditorWidget::toJson()
+{
+    QJsonObject json;
+    QJsonArray elementArray;
+    int index = 0;
+    for (auto iter = m_elements.begin(); iter != m_elements.end(); iter ++, index ++)
+    {
+        (*iter)->m_index = index;
+        elementArray.append((*iter)->toJson());
+    }
+    json.insert("elements", elementArray);
+
+    QJsonArray wireArray;
+    for (auto iter = m_wires.begin(); iter != m_wires.end(); iter ++)
+        wireArray.append((*iter)->toJson());
+    json.insert("wires", wireArray);
+
+    QJsonArray curProbeArray;
+    for (auto iter = m_currentProbes.begin(); iter != m_currentProbes.end(); iter ++)
+        curProbeArray.append((*iter)->toJson());
+    json.insert("current probes", curProbeArray);
+
+    QJsonArray volProbeArray;
+    for (auto iter = m_voltageProbes.begin(); iter != m_voltageProbes.end(); iter ++)
+        volProbeArray.append((*iter)->toJson());
+    json.insert("voltage probes", volProbeArray);
+
+    return json;
+}
+
+void EditorWidget::fromJson(const QJsonObject &json)
+{
+    while (m_wires.count()) delete m_wires.first();
+    while (m_elements.count()) delete m_elements.first();
+    for (auto iter = m_currentProbes.begin(); iter != m_currentProbes.end(); iter ++) delete *iter;
+    for (auto iter = m_voltageProbes.begin(); iter != m_voltageProbes.end(); iter ++) delete *iter;
+    m_currentProbes.clear();
+    m_voltageProbes.clear();
+
+    QJsonArray elementArray = json["elements"].toArray();
+    for (auto iter = elementArray.begin(); iter != elementArray.end(); iter ++)
+        Editor::Element::instantiateFromJson(this, iter->toObject());
+
+    QJsonArray wireArray = json["wires"].toArray();
+    for (auto iter = wireArray.begin(); iter != wireArray.end(); iter ++)
+        (new Editor::Wire(this))->fromJson(iter->toObject());
+
+    QJsonArray curProbeArray = json["current probes"].toArray();
+    for (auto iter = curProbeArray.begin(); iter != curProbeArray.end(); iter ++)
+        m_currentProbes.append((new CurrentProbe(this))->fromJson(this, iter->toObject()));
+
+    QJsonArray volProbeArray = json["voltage probes"].toArray();
+    for (auto iter = volProbeArray.begin(); iter != volProbeArray.end(); iter ++)
+        m_voltageProbes.append((new VoltageProbe(this))->fromJson(iter->toObject()));
+
+    m_posx = m_posy = 0;
+    m_scale = 16;
+    m_isDragingElement = false;
+    m_isDragingScreen = false;
+    m_selectedElement = nullptr;
+    m_selectedWire = nullptr;
+    m_selectedCurProbe = nullptr;
+    m_selectedVolProbe = nullptr;
+    m_unselectWhenRelease = false;
+    m_placingWire = false;
+    m_placeWireWhenRelease = false;
+    m_placingCurProbe = false;
+
+    update();
 }
 
 #define SCR_X(ux) (((ux) - m_posx) * m_scale)
@@ -504,8 +614,12 @@ void EditorWidget::wheelEvent(QWheelEvent *event)
     update();
 }
 
+#include <QJsonDocument>
+
 void EditorWidget::createContextMenu(QMenu *menu, QPoint pos)
 {
+    QPoint uniPos = QPoint(round(UNI_X(pos.x())), round(UNI_Y(pos.y())));
+
     if (((MainWindow *) parent())->isSimulating()) menu->addAction(tr("Stop Simulation"), this, &EditorWidget::stopSimultaion);
     else menu->addAction(tr("Start Simulation"), this, &EditorWidget::startSimultaion);
     menu->addSeparator();
@@ -521,19 +635,38 @@ void EditorWidget::createContextMenu(QMenu *menu, QPoint pos)
 
     menu->addAction(tr("Place Wire"), this, &EditorWidget::startPlacingWire);
     QMenu *probeMenu = new QMenu(tr("Place Probe"), menu);
-    probeMenu->addAction(tr("Voltage"), this, [this, pos]() { \
-        m_voltageProbes.append(new VoltageProbe(this, QPoint(round(UNI_X(pos.x())), round(UNI_Y(pos.y()))))); \
+    probeMenu->addAction(tr("Voltage"), this, [this, uniPos]() {
+        m_voltageProbes.append(new VoltageProbe(this, uniPos));
     });
     probeMenu->addAction(tr("Current"), this, &EditorWidget::startPlacingCurProbe);
     menu->addMenu(probeMenu);
-    QMenu *elementMenu = new QMenu(tr("Place Element"), menu);
-#define REG_ELEMENT(element) elementMenu->addAction(tr(#element), this, [this, pos]() { \
-                                 new Editor::element(this, QPoint(round(UNI_X(pos.x())), round(UNI_Y(pos.y())))); \
-                             })
-    REG_ELEMENT(Ground);
-    REG_ELEMENT(VCC);
-    REG_ELEMENT(Resistor);
-    menu->addMenu(elementMenu);
+    QMap<QString, QMenu *> elementMenus;
+    QMenu *rootElementMenu = new QMenu(tr("Place Element"), menu);
+    elementMenus.insert("", rootElementMenu);
+    for (auto iter = Editor::Element::elementMap().cbegin();
+         iter != Editor::Element::elementMap().cend(); iter ++)
+    {
+        auto *func = iter.value();
+        QStringList parts = iter.key().split("/");
+        QString name = parts.last();
+        parts.pop_back();
+        QMenu *tmpMenu = rootElementMenu;
+        QString column = "";
+        while (parts.count()) {
+            column += parts.first();
+            if (elementMenus.contains(column)) tmpMenu = elementMenus[column];
+            else
+            {
+                QMenu *parentMenu = tmpMenu;
+                tmpMenu = new QMenu(parts.first(), parentMenu);
+                parentMenu->addMenu(tmpMenu);
+                elementMenus.insert(column, tmpMenu);
+            }
+            parts.pop_front();
+        }
+        tmpMenu->addAction(name, this, [this, func, uniPos]() { func(this)->setPosition(uniPos); });
+    }
+    menu->addMenu(rootElementMenu);
 }
 
 void EditorWidget::rotateElementCCW()

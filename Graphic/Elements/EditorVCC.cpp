@@ -1,6 +1,7 @@
 #include "EditorVCC.h"
 
 #include <QRect>
+#include <QJsonObject>
 #include <QPainter>
 
 #include "../EditorWidget.h"
@@ -71,4 +72,24 @@ QVector<CirSim::Pin *> VCC::createElement(CirSim::Circuit *circuit)
 void VCC::parameterChanged(void *paramenter)
 {
     if (paramenter == &m_label) m_widget->update();
+}
+
+QString VCC::typeName()
+{
+    return elementName<VCC>();
+}
+
+QJsonObject VCC::toJson()
+{
+    QJsonObject json = Element::toJson();
+    json.insert("label", m_label);
+    json.insert("voltage", m_voltage);
+    return json;
+}
+
+void VCC::fromJson(const QJsonObject &json)
+{
+    Element::fromJson(json);
+    m_label = json["label"].toString();
+    m_voltage = json["voltage"].toDouble();
 }

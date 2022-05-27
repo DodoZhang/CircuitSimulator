@@ -32,9 +32,11 @@ protected:
         QString label;
         ParametersInputWidget *inspector;
     public:
-        CurrentProbe(EditorWidget *editor, Editor::Element *element, int pin);
+        CurrentProbe(EditorWidget *editor, Editor::Element *element = nullptr, int pin = 0);
         ~CurrentProbe();
         void paint(QPainter *painter);
+        QJsonObject toJson();
+        CurrentProbe *fromJson(EditorWidget *editor, const QJsonObject &json);
     };
 
     class VoltageProbe
@@ -46,9 +48,11 @@ protected:
         QString label;
         ParametersInputWidget *inspector;
     public:
-        VoltageProbe(EditorWidget *editor, QPoint pos);
+        VoltageProbe(EditorWidget *editor, QPoint pos = QPoint());
         ~VoltageProbe();
         void paint(QPainter *painter);
+        QJsonObject toJson();
+        VoltageProbe *fromJson(const QJsonObject &json);
     };
 
 protected:
@@ -81,6 +85,8 @@ public:
     explicit EditorWidget(MainWindow *parent = nullptr);
     ~EditorWidget();
     void createContextMenu(QMenu *menu, QPoint pos);
+    QJsonObject toJson();
+    void fromJson(const QJsonObject &json);
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;

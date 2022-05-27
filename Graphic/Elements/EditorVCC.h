@@ -20,6 +20,9 @@ public:
     int pinCount() const override;
     ParametersInputWidget *inspectorWidget() override;
     QVector<CirSim::Pin *> createElement(CirSim::Circuit *circuit) override;
+    QString typeName() override;
+    QJsonObject toJson() override;
+    void fromJson(const QJsonObject &json) override;
 
 protected:
     QRect originalRect() const override;

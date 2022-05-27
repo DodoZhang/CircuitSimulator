@@ -1,6 +1,7 @@
 #include "EditorResistor.h"
 
 #include <QRect>
+#include <QJsonObject>
 #include <QPainter>
 
 #include "Graphic/ParametersInputWidget.h"
@@ -65,4 +66,22 @@ QVector<CirSim::Pin *> Resistor::createElement(CirSim::Circuit *circuit)
     pins.append(r->pin(0));
     pins.append(r->pin(1));
     return pins;
+}
+
+QString Resistor::typeName()
+{
+    return elementName<Resistor>();
+}
+
+QJsonObject Resistor::toJson()
+{
+    QJsonObject json = Element::toJson();
+    json.insert("resistance", m_resistance);
+    return json;
+}
+
+void Resistor::fromJson(const QJsonObject &json)
+{
+    Element::fromJson(json);
+    m_resistance = json["resistance"].toDouble();
 }

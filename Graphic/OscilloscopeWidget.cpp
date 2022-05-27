@@ -1,7 +1,8 @@
 #include "OscilloscopeWidget.h"
 
+#include <QJsonObject>
+#include <QJsonArray>
 #include <QPainter>
-#include <QPushButton>
 
 #include "ParametersInputWidget.h"
 
@@ -37,6 +38,45 @@ OscilloscopeWidget::~OscilloscopeWidget()
 }
 
 ParametersInputWidget *OscilloscopeWidget::inspectorWidget() { return m_inspector; }
+
+QJsonObject OscilloscopeWidget::toJson()
+{
+    QJsonObject json;
+    json.insert("div size", QJsonArray { m_divw, m_divh });
+    json.insert("t/div", m_tpdiv);
+    QJsonArray signalArray;
+    for (int i = 0, s = m_signalParameters.count(); i < s; i ++)
+    {
+        QJsonObject signalObj;
+        signalObj.insert("value", m_signalParameters[i]->value.get());
+        signalObj.insert("v/div", m_signalParameters[i]->vpdiv);
+        signalObj.insert("color", QJsonArray { m_signalParameters[i]->color.red(),
+                                               m_signalParameters[i]->color.green(),
+                                               m_signalParameters[i]->color.blue() });
+        signalArray.append(signalObj);
+    }
+    json.insert("signals", signalArray);
+    return json;
+}
+
+void OscilloscopeWidget::fromJson(const QJsonObject &json)
+{
+    m_divw = json["div size"].toArray().at(0).toInt();
+    m_divh = json["div size"].toArray().at(1).toInt();
+    m_tpdiv = json["t/div"].toDouble();
+    parameterChanged(&m_divw);
+    QJsonArray signalArray = json["signals"].toArray();
+    m_signalCount = signalArray.count();
+    parameterChanged(&m_signalCount);
+    for (int i = 0; i < m_signalCount; i ++)
+    {
+        QJsonObject signalObj = signalArray[i].toObject();
+        m_signalParameters[i]->value.set(signalObj["value"].toString());
+        m_signalParameters[i]->vpdiv = signalObj["v/div"].toDouble();
+        QJsonArray colorArray = signalObj["color"].toArray();
+        m_signalParameters[i]->color = QColor(colorArray[0].toInt(), colorArray[1].toInt(), colorArray[2].toInt());
+    }
+}
 
 void OscilloscopeWidget::paintEvent(QPaintEvent *event)
 {

@@ -1,5 +1,8 @@
 #include "EditorWire.h"
 
+#include <QJsonObject>
+#include <QJsonArray>
+
 #include "EditorWidget.h"
 #include "EditorElement.h"
 
@@ -113,4 +116,33 @@ void Wire::updatePath()
 {
     m_path.first() = m_elements[0]->pinPos(m_pins[0]);
     m_path.last() = m_elements[1]->pinPos(m_pins[1]);
+}
+
+QJsonObject Wire::toJson()
+{
+    QJsonObject json;
+    QJsonObject beginNode, endNode;
+    beginNode.insert("element", m_elements[0]->m_index);
+    beginNode.insert("pin", m_pins[0]);
+    endNode.insert("element", m_elements[1]->m_index);
+    endNode.insert("pin", m_pins[1]);
+    json.insert("begin", beginNode);
+    json.insert("end", endNode);
+    QJsonArray pathArray;
+    for (auto iter = m_path.begin(); iter != m_path.end(); iter ++)
+        pathArray.append(QJsonArray { iter->x(), iter->y() });
+    json.insert("path", pathArray);
+    return json;
+}
+
+void Wire::fromJson(const QJsonObject &json)
+{
+    QJsonObject beginNode = json["begin"].toObject();
+    QJsonObject endNode = json["end"].toObject();
+    QJsonArray pathArray = json["path"].toArray();
+    m_path.clear();
+    startRecording(m_widget->m_elements.at(beginNode["element"].toInt()), beginNode["pin"].toInt());
+    for (int i = 1, s = pathArray.count() - 1; i < s; i ++)
+        recordNode(QPoint(pathArray.at(i).toArray()[0].toInt(), pathArray.at(i).toArray()[1].toInt()));
+    stopRecording(m_widget->m_elements.at(endNode["element"].toInt()), endNode["pin"].toInt());
 }

@@ -1,12 +1,24 @@
 #include "EditorElement.h"
 
 #include <QRect>
+#include <QJsonObject>
+#include <QJsonArray>
 #include <QPainter>
 
 #include "EditorWidget.h"
 #include "EditorWire.h"
 
 using namespace Editor;
+
+QMap<QString, Element *(*)(EditorWidget *)> Element::s_insFunc;
+QMap<Element *(*)(EditorWidget *), QString> Element::s_eleName;
+
+Element *Element::instantiateFromJson(EditorWidget *widget, QJsonObject json)
+{
+    Element *element = s_insFunc[json["type"].toString()](widget);
+    element->fromJson(json);
+    return element;
+}
 
 Element::Element(EditorWidget *widget, QPoint position, ElementRotation rotation)
     : QObject(widget)
@@ -88,4 +100,20 @@ void Element::paint(QPainter *painter)
     if (m_rotation & VerFliped) painter->scale(1, -1);
     paintEvent(painter);
     painter->restore();
+}
+
+QJsonObject Element::toJson()
+{
+    QJsonObject json;
+    json.insert("type", typeName());
+    json.insert("position", QJsonArray { m_position.x(), m_position.y() });
+    json.insert("rotation", (int) m_rotation);
+    return json;
+}
+
+void Element::fromJson(const QJsonObject &json)
+{
+    QJsonArray posArray = json["position"].toArray();
+    m_position = QPoint(posArray[0].toInt(), posArray[1].toInt());
+    m_rotation = (ElementRotation) json["rotation"].toInt();
 }

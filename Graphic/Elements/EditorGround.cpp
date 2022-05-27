@@ -61,3 +61,7 @@ QVector<CirSim::Pin *> Ground::createElement(CirSim::Circuit *circuit)
     return pins;
 }
 
+QString Ground::typeName()
+{
+    return elementName<Ground>();
+}

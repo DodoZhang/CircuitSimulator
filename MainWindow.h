@@ -62,6 +62,8 @@ public:
     ~MainWindow();
     void setInspector(QWidget *inspector);
     bool isSimulating();
+    QByteArray serialize();
+    void deserialize(const QByteArray &bytes);
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event) override;
