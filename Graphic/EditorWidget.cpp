@@ -7,11 +7,17 @@
 #include <QMouseEvent>
 #include <QWheelEvent>
 
+#include "MainWindow.h"
+#include "ParametersInputWidget.h"
+#include "Simulation/Circuit.h"
+#include "Simulation/Pin.h"
 #include "EditorElement.h"
 #include "EditorWire.h"
-#include "Elements/EditorResistance.h"
+#include "Elements/EditorGround.h"
+#include "Elements/EditorVCC.h"
+#include "Elements/EditorResistor.h"
 
-EditorWidget::EditorWidget(QWidget *parent) : QWidget(parent)
+EditorWidget::EditorWidget(MainWindow *parent) : QWidget(parent)
 {
     m_posx = m_posy = 0;
     m_scale = 16;
@@ -24,14 +30,17 @@ EditorWidget::EditorWidget(QWidget *parent) : QWidget(parent)
     m_placingWire = false;
     m_placeWireWhenRelease = false;
 
-    auto *R1 = new Editor::Resistance(this, QPoint(3, 3));
-    auto *R2 = new Editor::Resistance(this, QPoint(8, 8), Editor::Element::West);
-    auto *W = new Editor::Wire(this);
-    W->startRecording(R1, 1);
-    W->recordNode(QPoint(8, 3));
-    W->stopRecording(R2, 1);
-
     setFocusPolicy(Qt::ClickFocus);
+
+    m_inspector = new ParametersInputWidget();
+    m_inspector->addParameter(&parent->m_tickTime, tr("Tick Time"), PIWItemType(double));
+    m_inspector->addParameter(&parent->m_playbackSpeed, tr("Playback Speed"), PIWItemType(double));
+}
+
+EditorWidget::~EditorWidget()
+{
+    delete m_pixmap;
+    delete m_inspector;
 }
 
 #define SCR_X(ux) (((ux) - m_posx) * m_scale)
@@ -200,6 +209,7 @@ void EditorWidget::mousePressEvent(QMouseEvent *event)
             m_selectedWire = nullptr;
             m_isDragingElement = true;
             m_oriElementPos = m_selectedElement->position();
+            ((MainWindow *) parent())->setInspector(m_selectedElement->inspectorWidget());
             goto finishEvent;
         }
 
@@ -248,6 +258,7 @@ void EditorWidget::mouseReleaseEvent(QMouseEvent *event)
     {
         m_selectedElement = nullptr;
         m_selectedWire = nullptr;
+        ((MainWindow *) parent())->setInspector(m_inspector);
         m_unselectWhenRelease = false;
         update();
     }
@@ -295,6 +306,9 @@ void EditorWidget::wheelEvent(QWheelEvent *event)
 
 void EditorWidget::createContextMenu(QMenu *menu, QPoint pos)
 {
+    if (((MainWindow *) parent())->isSimulating()) menu->addAction(tr("Stop Simulation"), this, &EditorWidget::stopSimultaion);
+    else menu->addAction(tr("Start Simulation"), this, &EditorWidget::startSimultaion);
+    menu->addSeparator();
     if (m_selectedElement)
     {
         menu->addAction(tr("Rotate 90°CCW"), this, &EditorWidget::rotateElementCCW);
@@ -305,9 +319,12 @@ void EditorWidget::createContextMenu(QMenu *menu, QPoint pos)
     }
     menu->addAction(tr("Place Wire"), this, &EditorWidget::startPlacingWire);
     QMenu *elementMenu = new QMenu(tr("Place Element"), menu);
-    elementMenu->addAction(tr("Resistance"), this, [this, pos]() {
-        new Editor::Resistance(this, QPoint(round(UNI_X(pos.x())), round(UNI_Y(pos.y()))));
-    });
+#define REG_ELEMENT(element) elementMenu->addAction(tr(#element), this, [this, pos]() { \
+                                 new Editor::element(this, QPoint(round(UNI_X(pos.x())), round(UNI_Y(pos.y())))); \
+                             })
+    REG_ELEMENT(Ground);
+    REG_ELEMENT(VCC);
+    REG_ELEMENT(Resistor);
     menu->addMenu(elementMenu);
 }
 
@@ -368,4 +385,31 @@ void EditorWidget::startPlacingWire()
         m_selectedWire = new Editor::Wire(this);
         setMouseTracking(true);
     }
+}
+
+#include <QDebug>
+
+void EditorWidget::startSimultaion()
+{
+    CirSim::Circuit *cir = new CirSim::Circuit();
+    QHash<Editor::Element *, QVector<CirSim::Pin *>> pinMap;
+    for (auto iter = m_elements.begin(); iter != m_elements.end(); iter ++)
+        pinMap.insert(*iter, (*iter)->createElement(cir));
+    for (auto iter = m_wires.begin(); iter != m_wires.end(); iter ++)
+        pinMap[(*iter)->element(0)][(*iter)->pin(0)]
+                ->connect(pinMap[(*iter)->element(1)][(*iter)->pin(1)]);
+    auto *mw = (MainWindow *) parent();
+    mw->m_circuit = cir;
+    qDebug(mw->m_circuit->debug().toLatin1());
+    mw->startSimulation();
+}
+
+void EditorWidget::stopSimultaion()
+{
+    auto *mw = (MainWindow *) parent();
+    mw->stopSimulation();
+    delete mw->m_circuit;
+    mw->m_circuit = nullptr;
+    mw->m_currentProbes.clear();
+    mw->m_voltageProbes.clear();
 }

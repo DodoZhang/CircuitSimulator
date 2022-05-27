@@ -1,6 +1,7 @@
 #ifndef EDITORELEMENT_H
 #define EDITORELEMENT_H
 
+#include <QObject>
 #include <QPoint>
 
 class QRect;
@@ -20,8 +21,9 @@ class ParametersInputWidget;
 
 namespace Editor {
 
-class Element
+class Element : public QObject
 {
+    Q_OBJECT
 public:
     enum ElementRotation : unsigned short
     {

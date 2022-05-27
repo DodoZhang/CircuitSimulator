@@ -8,13 +8,14 @@
 
 class QMenu;
 
-namespace Editor {
+class MainWindow;
+class ParametersInputWidget;
 
+namespace Editor {
 class Element;
 class Wire;
 typedef QPoint CurrentProbe;
 typedef QPoint VoltageProbe;
-
 }
 
 class EditorWidget : public QWidget
@@ -28,6 +29,7 @@ protected:
     QList<Editor::Element *> m_elements;
     QList<Editor::Wire *> m_wires;
     QMap<Editor::Element *, QVector<Editor::Wire *>> m_wireMap;
+    ParametersInputWidget *m_inspector;
     QPixmap *m_pixmap;
 
 private:
@@ -42,7 +44,8 @@ private:
     bool m_placeWireWhenRelease;
 
 public:
-    explicit EditorWidget(QWidget *parent = nullptr);
+    explicit EditorWidget(MainWindow *parent = nullptr);
+    ~EditorWidget();
     void createContextMenu(QMenu *menu, QPoint pos);
 
 protected:
@@ -60,6 +63,8 @@ protected slots:
     void flipHorizontal();
     void flipVertical();
     void startPlacingWire();
+    void startSimultaion();
+    void stopSimultaion();
 };
 
 #endif // EDITORWIDGET_H

@@ -1,19 +1,18 @@
-#ifndef EDITOR_RESISTANCE_H
-#define EDITOR_RESISTANCE_H
+#ifndef EDITOR_GROUND_H
+#define EDITOR_GROUND_H
 
 #include "../EditorElement.h"
 
 namespace Editor {
 
-class Resistance : public Element
+class Ground : public Element
 {
 protected:
-    double m_resistance;
     ParametersInputWidget *m_inspector;
 
 public:
-    Resistance(EditorWidget *widget, QPoint position = QPoint(), ElementRotation rotation = North, double resistance = 1000);
-    ~Resistance();
+    Ground(EditorWidget *widget, QPoint position = QPoint(), ElementRotation rotation = North);
+    ~Ground();
     int pinCount() const override;
     ParametersInputWidget *inspectorWidget() override;
     QVector<CirSim::Pin *> createElement(CirSim::Circuit *circuit) override;
@@ -26,4 +25,4 @@ protected:
 
 } // namespace Editor
 
-#endif // EDITOR_RESISTANCE_H
+#endif // EDITOR_GROUND_H

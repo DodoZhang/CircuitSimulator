@@ -49,9 +49,14 @@ void Element::setRotation(ElementRotation rotation)
 QRect Element::rect()
 {
     QRect ori = originalRect();
-    if (m_rotation & (West & East)) ori = QRect(ori.y(), ori.x(), ori.height(), ori.width());
+    switch (m_rotation & DirMask) {
+    case North: break;
+    case  West: ori = QRect(ori.y(), -ori.width() - ori.x(), ori.height(), ori.width()); break;
+    case South: ori = QRect(-ori.width() - ori.x(), -ori.height() - ori.y(), ori.width(), ori.height()); break;
+    case  East: ori = QRect(-ori.height() - ori.y(), ori.x(), ori.height(), ori.width()); break;
+    }
     if (m_rotation & HorFliped) ori = QRect(-ori.width() - ori.x(), ori.y(), ori.width(), ori.height());
-    if (m_rotation & VerFliped) ori = QRect(ori.x(), -ori.height() - ori.y(), ori.width(), ori.height());
+    if (m_rotation & VerFliped) ori = QRect(-ori.x(), -ori.height() - ori.y(), ori.width(), ori.height());
     return ori.translated(m_position);
 }
 
@@ -74,9 +79,9 @@ void Element::paint(QPainter *painter)
     painter->save();
     switch (m_rotation & DirMask) {
     case North: break;
-    case  West: painter->rotate(90); break;
+    case  West: painter->rotate(-90); break;
     case South: painter->rotate(180); break;
-    case  East: painter->rotate(270); break;
+    case  East: painter->rotate(90); break;
     }
     if (m_rotation & HorFliped) painter->scale(-1, 1);
     if (m_rotation & VerFliped) painter->scale(1, -1);

@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QDockWidget>
 #include <QBasicTimer>
 
 namespace CirSim {
@@ -28,6 +29,18 @@ typedef struct
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
+    friend class EditorWidget;
+protected:
+    class OscDockWidget : public QDockWidget
+    {
+    protected:
+        OscilloscopeWidget *m_oscilloscope;
+    public:
+        OscDockWidget(MainWindow *parent);
+        OscilloscopeWidget *oscilloscope();
+    protected:
+        void mousePressEvent(QMouseEvent *event) override;
+    };
 protected:
     double m_time;
     double m_tickTime;
@@ -37,8 +50,7 @@ protected:
     QList<CurrentProbe> m_currentProbes;
     QList<VoltageProbe> m_voltageProbes;
     EditorWidget *m_editor;
-    OscilloscopeWidget *m_oscilloscope;
-    QDockWidget *m_oscilloscopeDock;
+    OscDockWidget *m_oscilloscopeDock;
     QDockWidget *m_inspectorDock;
 
 private:
@@ -48,6 +60,8 @@ private:
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    void setInspector(QWidget *inspector);
+    bool isSimulating();
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event) override;
@@ -55,6 +69,6 @@ protected:
 
 public slots:
     void startSimulation();
-    void endSimulation();
+    void stopSimulation();
 };
 #endif // MAINWINDOW_H
