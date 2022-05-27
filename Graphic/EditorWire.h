@@ -1,6 +1,7 @@
 #ifndef EDITOR_WIRE_H
 #define EDITOR_WIRE_H
 
+#include <QObject>
 #include <QVector>
 #include <QPoint>
 
@@ -10,8 +11,9 @@ namespace Editor {
 
 class Element;
 
-class Wire
+class Wire : QObject
 {
+    Q_OBJECT
 protected:
     Element *m_elements[2];
     int m_pins[2];

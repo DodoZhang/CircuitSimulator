@@ -14,8 +14,6 @@ class ParametersInputWidget;
 namespace Editor {
 class Element;
 class Wire;
-typedef QPoint CurrentProbe;
-typedef QPoint VoltageProbe;
 }
 
 class EditorWidget : public QWidget
@@ -24,11 +22,43 @@ class EditorWidget : public QWidget
     friend class Editor::Element;
     friend class Editor::Wire;
 protected:
+    class CurrentProbe
+    {
+    private:
+        static int count;
+    public:
+        Editor::Element *element;
+        int pin;
+        QString label;
+        ParametersInputWidget *inspector;
+    public:
+        CurrentProbe(EditorWidget *editor, Editor::Element *element, int pin);
+        ~CurrentProbe();
+        void paint(QPainter *painter);
+    };
+
+    class VoltageProbe
+    {
+    private:
+        static int count;
+    public:
+        QPoint pos;
+        QString label;
+        ParametersInputWidget *inspector;
+    public:
+        VoltageProbe(EditorWidget *editor, QPoint pos);
+        ~VoltageProbe();
+        void paint(QPainter *painter);
+    };
+
+protected:
     float m_posx, m_posy;
     float m_scale;
     QList<Editor::Element *> m_elements;
     QList<Editor::Wire *> m_wires;
     QMap<Editor::Element *, QVector<Editor::Wire *>> m_wireMap;
+    QList<CurrentProbe *> m_currentProbes;
+    QList<VoltageProbe *> m_voltageProbes;
     ParametersInputWidget *m_inspector;
     QPixmap *m_pixmap;
 
@@ -39,9 +69,13 @@ private:
     bool m_isDragingScreen;
     Editor::Element *m_selectedElement;
     Editor::Wire *m_selectedWire;
+    CurrentProbe *m_selectedCurProbe;
+    VoltageProbe *m_selectedVolProbe;
     bool m_unselectWhenRelease;
     bool m_placingWire;
     bool m_placeWireWhenRelease;
+    bool m_placingCurProbe;
+    bool m_placeCurProbeWhenRelease;
 
 public:
     explicit EditorWidget(MainWindow *parent = nullptr);
@@ -63,8 +97,10 @@ protected slots:
     void flipHorizontal();
     void flipVertical();
     void startPlacingWire();
+    void startPlacingCurProbe();
     void startSimultaion();
     void stopSimultaion();
+    void updateSlot();
 };
 
 #endif // EDITORWIDGET_H

@@ -6,6 +6,7 @@
 using namespace Editor;
 
 Wire::Wire(EditorWidget *widget)
+    : QObject(widget)
 {
     m_widget = widget;
     m_widget->m_wires.append(this);

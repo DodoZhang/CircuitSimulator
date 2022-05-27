@@ -9,6 +9,7 @@
 using namespace Editor;
 
 Element::Element(EditorWidget *widget, QPoint position, ElementRotation rotation)
+    : QObject(widget)
 {
     m_widget = widget;
     widget->m_elements.append(this);
