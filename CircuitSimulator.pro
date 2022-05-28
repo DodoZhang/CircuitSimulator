@@ -18,6 +18,7 @@ SOURCES += \
     Graphic/Elements/EditorFunctionGenerator.cpp \
     Graphic/Elements/EditorGround.cpp \
     Graphic/Elements/EditorInductor.cpp \
+    Graphic/Elements/EditorMOSFET.cpp \
     Graphic/Elements/EditorResistor.cpp \
     Graphic/Elements/EditorVCC.cpp \
     Graphic/Elements/EditorVoltageSource.cpp \
@@ -49,6 +50,7 @@ HEADERS += \
     Graphic/Elements/EditorFunctionGenerator.h \
     Graphic/Elements/EditorGround.h \
     Graphic/Elements/EditorInductor.h \
+    Graphic/Elements/EditorMOSFET.h \
     Graphic/Elements/EditorResistor.h \
     Graphic/Elements/EditorVCC.h \
     Graphic/Elements/EditorVoltageSource.h \

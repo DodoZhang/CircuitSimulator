@@ -70,21 +70,21 @@ QRect Element::rect()
     case  East: ori = QRect(-ori.height() - ori.y(), ori.x(), ori.height(), ori.width()); break;
     }
     if (m_rotation & HorFliped) ori = QRect(-ori.width() - ori.x(), ori.y(), ori.width(), ori.height());
-    if (m_rotation & VerFliped) ori = QRect(-ori.x(), -ori.height() - ori.y(), ori.width(), ori.height());
+    if (m_rotation & VerFliped) ori = QRect(ori.x(), -ori.height() - ori.y(), ori.width(), ori.height());
     return ori.translated(m_position);
 }
 
 QPoint Element::pinPos(int index)
 {
     QPoint tmp = originalPinPos(index);
+    if (m_rotation & HorFliped) tmp.setX(-tmp.x());
+    if (m_rotation & VerFliped) tmp.setY(-tmp.y());
     switch (m_rotation & DirMask) {
     case North: break;
     case  West: tmp = QPoint( tmp.y(), -tmp.x()); break;
     case South: tmp = QPoint(-tmp.x(), -tmp.y()); break;
     case  East: tmp = QPoint(-tmp.y(),  tmp.x()); break;
     }
-    if (m_rotation & HorFliped) tmp.setX(-tmp.x());
-    if (m_rotation & VerFliped) tmp.setY(-tmp.y());
     return tmp + m_position;
 }
 

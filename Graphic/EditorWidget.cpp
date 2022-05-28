@@ -26,6 +26,7 @@
 #include "Elements/EditorCapacity.h"
 #include "Elements/EditorInductor.h"
 #include "Elements/EditorDiode.h"
+#include "Elements/EditorMOSFET.h"
 
 #ifdef QT_DEBUG
 #include <QDebug>
@@ -158,6 +159,7 @@ EditorWidget::EditorWidget(MainWindow *parent) : QWidget(parent)
     Editor::Element::registerElement<Editor::Capacity>(tr("Capacity"));
     Editor::Element::registerElement<Editor::Inductor>(tr("Inductor"));
     Editor::Element::registerElement<Editor::Diode>(tr("Transistor/Diode"));
+    Editor::Element::registerElement<Editor::MOSFET>(tr("Transistor/MOSFET"));
 }
 
 EditorWidget::~EditorWidget()

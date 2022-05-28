@@ -57,7 +57,6 @@ void CurrentSource::paintEvent(QPainter *painter)
         QPointF(0.4, -0.15)
     };
     painter->drawConvexPolygon(points, 3);
-    painter->setBrush(Qt::NoBrush);
     painter->drawLine(1, 0, 2, 0);
 }
 

@@ -198,11 +198,16 @@ void OscilloscopeWidget::parameterChanged(void *parameter)
     {
         while (m_signalCount > m_signalParameters.count())
         {
-            auto *sig = new SignalParameter { InfixExpression("0"), 1, QColor(255, 128, 64) };
-            QString signalLabel = "Signal " + QString::number(m_signalParameters.count() + 1) + "//";
-            m_inspector->addParameter(&sig->value, signalLabel + "Value", PIWItemType(InfixExpression));
-            m_inspector->addParameter(&sig->vpdiv, signalLabel + "v/div", PIWItemType(double));
-            m_inspector->addParameter(&sig->color, signalLabel + "Color", PIWItemType(QColor));
+            auto *sig = new SignalParameter { InfixExpression("0"), 1, QColor() };
+            switch (m_signalParameters.count() % 3) {
+            case 0: sig->color = QColor(255, 128, 64); break;
+            case 1: sig->color = QColor(64, 255, 128); break;
+            case 2: sig->color = QColor(64, 192, 255); break;
+            }
+            QString signalLabel = tr("Signal ") + QString::number(m_signalParameters.count() + 1) + "//";
+            m_inspector->addParameter(&sig->value, signalLabel + tr("Value"), PIWItemType(InfixExpression));
+            m_inspector->addParameter(&sig->vpdiv, signalLabel + tr("v/div"), PIWItemType(double));
+            m_inspector->addParameter(&sig->color, signalLabel + tr("Color"), PIWItemType(QColor));
             m_signalParameters.append(sig);
             m_signalValues.append(new SignalValue { 0, 0, 0 } );
         }
@@ -212,10 +217,10 @@ void OscilloscopeWidget::parameterChanged(void *parameter)
             m_signalParameters.removeLast();
             m_signalValues.removeLast();
             delete sig;
-            QString signalLabel = "Signal " + QString::number(m_signalParameters.count() + 1);
-            m_inspector->removeParameter(signalLabel + "//Value");
-            m_inspector->removeParameter(signalLabel + "//v/div");
-            m_inspector->removeParameter(signalLabel + "//Color");
+            QString signalLabel = tr("Signal ") + QString::number(m_signalParameters.count() + 1);
+            m_inspector->removeParameter(signalLabel + "//" + tr("Value"));
+            m_inspector->removeParameter(signalLabel + "//" + tr("v/div"));
+            m_inspector->removeParameter(signalLabel + "//" + tr("Color"));
             m_inspector->removeParameter(signalLabel);
         }
     }
