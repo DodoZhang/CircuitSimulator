@@ -82,6 +82,6 @@ QJsonObject Resistor::toJson()
 
 void Resistor::fromJson(const QJsonObject &json)
 {
-    Element::fromJson(json);
     m_resistance = json["resistance"].toDouble();
+    Element::fromJson(json);
 }

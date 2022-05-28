@@ -60,6 +60,9 @@ public:
 signals:
     void parameterChanged(void *parameter);
 
+public slots:
+    void updateParameters();
+
 protected slots:
     void itemEdited(QTreeWidgetItem *item, int column);
 };

@@ -84,6 +84,7 @@ private:
 public:
     explicit EditorWidget(MainWindow *parent = nullptr);
     ~EditorWidget();
+    ParametersInputWidget *inspector();
     void createContextMenu(QMenu *menu, QPoint pos);
     QJsonObject toJson();
     void fromJson(const QJsonObject &json);

@@ -13,13 +13,24 @@ class Circuit
 {
     friend class Element;
     friend class Net;
+public:
+    enum IterateLevel : unsigned short
+    {
+        NoIteration = 0,
+        AsyncIteration = 1,
+        SyncIteration = 2
+    };
+
+public:
+    int maxIterations;
+    double maxAcceptableError;
+    IterateLevel iterateLevel;
+
 protected:
     QList<Element *> m_elements;
     QList<Net *> m_nets;
     Net *m_ground;
     double *m_mat;
-    int m_maxIterations;
-    double m_maxAcceptableError;
 
 private:
     bool m_solved;

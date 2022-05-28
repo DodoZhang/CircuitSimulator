@@ -14,8 +14,9 @@ Circuit::Circuit()
 {
     m_ground = nullptr;
     m_mat = nullptr;
-    m_maxIterations = 64;
-    m_maxAcceptableError = 1e-12;
+    maxIterations = 64;
+    maxAcceptableError = 1e-12;
+    iterateLevel = SyncIteration;
     m_solved = false;
 }
 
@@ -52,7 +53,7 @@ const Net *Circuit::ground() const
 }
 
 #define mat(i, j) (m_mat[(i) * (m_matSize + 1) + (j)])
-#define eps (1e-7)
+#define eps (1e-24)
 
 bool Circuit::solve()
 {
@@ -75,9 +76,11 @@ bool Circuit::solve()
         }
         m_matVolInd = m_matSize;
         m_matSize += m_nets.count();
+        if (m_matSize == 0) return false;
+        if (m_ground == nullptr) return false;
         m_mat = new double[m_matSize * (m_matSize + 1)];
-        std::fill_n(m_mat, m_matSize * (m_matSize + 1), 0.f);
     }
+    std::fill_n(m_mat, m_matSize * (m_matSize + 1), 0.0);
     // Write the matrix
     int cvrCount = 0;
     i = 0;
@@ -130,6 +133,9 @@ bool Circuit::solve()
                     goto eliminate;
                 }
             }
+#ifdef QT_DEBUG
+//            qDebug() << "Unable to solve the circuit!";
+#endif
             return false;
         }
         eliminate:
@@ -174,18 +180,34 @@ void Circuit::tick(double time, double deltaTime)
     for (auto iter = m_elements.begin(); iter != m_elements.end(); iter ++)
         (*iter)->tick(time, deltaTime);
     solve();
-    for (int i = 0; i < m_maxIterations; i ++)
+    if (iterateLevel == SyncIteration)
     {
-        double error = 0;
-        for (auto iter = m_elements.begin(); iter != m_elements.end(); iter ++)
-            error += (*iter)->error();
-        if (error <= m_maxAcceptableError) return;
-        for (auto iter = m_elements.begin(); iter != m_elements.end(); iter ++)
-            (*iter)->iterate(time, deltaTime);
-        solve();
+        for (int i = 0; i < maxIterations; i ++)
+        {
+            double error = 0;
+            for (auto iter = m_elements.begin(); iter != m_elements.end(); iter ++)
+                error += (*iter)->error();
+            if (error <= maxAcceptableError) return;
+            for (auto iter = m_elements.begin(); iter != m_elements.end(); iter ++)
+                (*iter)->iterate(time, deltaTime);
+            solve();
+        }
     }
+    else if (iterateLevel == AsyncIteration)
+    {
+        for (auto iter = m_elements.begin(); iter != m_elements.end(); iter ++)
+        {
+            for (int j = 0; j < maxIterations; j ++)
+            {
+                if ((*iter)->error() <= maxAcceptableError) break;
+                (*iter)->iterate(time, deltaTime);
+                solve();
+            }
+        }
+    }
+    return;
 #ifdef QT_DEBUG
-    if (m_maxAcceptableError >= 0)
+    if (maxAcceptableError >= 0)
         qDebug() << "Unacceptable Error! Please increase Max Iterations or reduce Max Acceptable Error.";
 #endif
 }
@@ -216,7 +238,8 @@ QString Circuit::debug()
         str += QString::number((*iter)->pins()[s]->element()->m_index) + "-";
         str += QString::number((*iter)->pins()[s]->m_index) + "\n";
     }
-    str += "\nGround: " + QString::number(m_ground->m_index);
+    if (m_ground) str += "\nGround: " + QString::number(m_ground->m_index);
+    else str += "\nWarning: No Ground!";
     return str;
 }
 #endif

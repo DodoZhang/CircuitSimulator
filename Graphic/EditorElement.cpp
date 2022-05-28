@@ -5,6 +5,7 @@
 #include <QJsonArray>
 #include <QPainter>
 
+#include "ParametersInputWidget.h"
 #include "EditorWidget.h"
 #include "EditorWire.h"
 
@@ -116,4 +117,5 @@ void Element::fromJson(const QJsonObject &json)
     QJsonArray posArray = json["position"].toArray();
     m_position = QPoint(posArray[0].toInt(), posArray[1].toInt());
     m_rotation = (ElementRotation) json["rotation"].toInt();
+    inspectorWidget()->updateParameters();
 }

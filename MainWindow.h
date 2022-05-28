@@ -46,6 +46,9 @@ protected:
     double m_tickTime;
     qint64 m_frameTime;
     double m_playbackSpeed;
+    int m_maxIterations;
+    double m_maxAcceptableError;
+    int m_iterateLevel;
     CirSim::Circuit *m_circuit;
     QList<CurrentProbe> m_currentProbes;
     QList<VoltageProbe> m_voltageProbes;

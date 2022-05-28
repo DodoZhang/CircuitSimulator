@@ -12,9 +12,15 @@ SOURCES += \
     Graphic/EditorElement.cpp \
     Graphic/EditorWidget.cpp \
     Graphic/EditorWire.cpp \
+    Graphic/Elements/EditorCapacity.cpp \
+    Graphic/Elements/EditorCurrentSource.cpp \
+    Graphic/Elements/EditorDiode.cpp \
+    Graphic/Elements/EditorFunctionGenerator.cpp \
     Graphic/Elements/EditorGround.cpp \
+    Graphic/Elements/EditorInductor.cpp \
     Graphic/Elements/EditorResistor.cpp \
     Graphic/Elements/EditorVCC.cpp \
+    Graphic/Elements/EditorVoltageSource.cpp \
     Graphic/OscilloscopeWidget.cpp \
     Graphic/ParametersInputWidget.cpp \
     InfixExpression.cpp \
@@ -37,9 +43,15 @@ HEADERS += \
     Graphic/EditorElement.h \
     Graphic/EditorWidget.h \
     Graphic/EditorWire.h \
+    Graphic/Elements/EditorCapacity.h \
+    Graphic/Elements/EditorCurrentSource.h \
+    Graphic/Elements/EditorDiode.h \
+    Graphic/Elements/EditorFunctionGenerator.h \
     Graphic/Elements/EditorGround.h \
+    Graphic/Elements/EditorInductor.h \
     Graphic/Elements/EditorResistor.h \
     Graphic/Elements/EditorVCC.h \
+    Graphic/Elements/EditorVoltageSource.h \
     Graphic/OscilloscopeWidget.h \
     Graphic/ParametersInputWidget.h \
     InfixExpression.h \

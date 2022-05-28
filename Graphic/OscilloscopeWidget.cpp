@@ -76,6 +76,7 @@ void OscilloscopeWidget::fromJson(const QJsonObject &json)
         QJsonArray colorArray = signalObj["color"].toArray();
         m_signalParameters[i]->color = QColor(colorArray[0].toInt(), colorArray[1].toInt(), colorArray[2].toInt());
     }
+    m_inspector->updateParameters();
 }
 
 void OscilloscopeWidget::paintEvent(QPaintEvent *event)

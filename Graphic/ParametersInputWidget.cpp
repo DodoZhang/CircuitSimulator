@@ -179,6 +179,13 @@ bool ParametersInputWidget::update_InfixExpression(void *parameter, const QStrin
     return ((InfixExpression *) parameter)->set(str);
 }
 
+void ParametersInputWidget::updateParameters()
+{
+    for (auto iter = m_items.begin(); iter != m_items.end(); iter ++)
+        if (iter.value()->m_display)
+            iter.value()->setText(1, iter.value()->m_display(iter.value()->m_parameter));
+}
+
 void ParametersInputWidget::itemEdited(QTreeWidgetItem* item, int)
 {
     PIWItem *piwitem = (PIWItem *) item;

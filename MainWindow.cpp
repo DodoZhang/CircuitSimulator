@@ -49,6 +49,9 @@ MainWindow::MainWindow(QWidget *parent)
     m_frameTime = 20;
     m_tickTime = 1e-4;
     m_playbackSpeed = 1;
+    m_maxIterations = 64;
+    m_maxAcceptableError = 1e-12;
+    m_iterateLevel = 2;
     m_timer = new QBasicTimer();
     m_circuit = nullptr;
 
@@ -56,8 +59,9 @@ MainWindow::MainWindow(QWidget *parent)
     setCentralWidget(m_editor);
     m_oscilloscopeDock = new OscDockWidget(this);
     m_inspectorDock = new QDockWidget(this);
-    m_inspectorDock->setWidget(m_oscilloscopeDock->oscilloscope()->inspectorWidget());
-    m_inspectorDock->setFloating(true);
+    m_inspectorDock->setWidget(m_editor->inspector());
+    addDockWidget(Qt::RightDockWidgetArea, m_inspectorDock);
+//    m_inspectorDock->setFloating(true);
 
 //    startSimulation();
 }
@@ -87,6 +91,9 @@ QByteArray MainWindow::serialize()
     QJsonObject simJson;
     simJson.insert("tick time", m_tickTime);
     simJson.insert("playback speed", m_playbackSpeed);
+    simJson.insert("max iterations", m_maxIterations);
+    simJson.insert("max acceptable error", m_maxAcceptableError);
+    simJson.insert("iterate level", m_iterateLevel);
     json.insert("simulation", simJson);
     json.insert("circuit", m_editor->toJson());
     json.insert("oscilloscope", m_oscilloscopeDock->oscilloscope()->toJson());
@@ -99,6 +106,9 @@ void MainWindow::deserialize(const QByteArray &bytes)
     QJsonObject simJson = json["simulation"].toObject();
     m_tickTime = simJson["tick time"].toDouble();
     m_playbackSpeed = simJson["playback speed"].toDouble();
+    m_maxIterations = simJson["max iterations"].toInt();
+    m_maxAcceptableError = simJson["max acceptable error"].toDouble();
+    m_iterateLevel = simJson["iterate level"].toInt();
     m_editor->fromJson(json["circuit"].toObject());
     m_oscilloscopeDock->oscilloscope()->fromJson(json["oscilloscope"].toObject());
 }
@@ -113,9 +123,9 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event)
     menu.addSeparator();
     m_editor->createContextMenu(&menu, event->pos());
     menu.addSeparator();
-    menu.addAction(tr("serialize"), this, [this]() { qDebug() << serialize(); });
-    menu.addAction(tr("deserialize"), this, [this]() {
-        deserialize("{\"circuit\":{\"current probes\":[{\"element\":2,\"label\":\"IM\",\"pin\":1},{\"element\":3,\"label\":\"IB\",\"pin\":1}],\"elements\":[{\"position\":[15,17],\"rotation\":3,\"type\":\"Source/Ground\"},{\"label\":\"VCC\",\"position\":[37,17],\"rotation\":3,\"type\":\"Source/VCC\",\"voltage\":10},{\"position\":[19,17],\"resistance\":20,\"rotation\":0,\"type\":\"Resistor\"},{\"position\":[29,19],\"resistance\":10,\"rotation\":0,\"type\":\"Resistor\"},{\"position\":[29,15],\"resistance\":10,\"rotation\":0,\"type\":\"Resistor\"}],\"voltage probes\":[{\"label\":\"VS\",\"position\":[33,15]},{\"label\":\"VR\",\"position\":[25,19]}],\"wires\":[{\"begin\":{\"element\":0,\"pin\":0},\"end\":{\"element\":2,\"pin\":0},\"path\":[[15,17],[17,17]]},{\"begin\":{\"element\":2,\"pin\":1},\"end\":{\"element\":4,\"pin\":0},\"path\":[[21,17],[23,17],[25,15],[27,15]]},{\"begin\":{\"element\":2,\"pin\":1},\"end\":{\"element\":3,\"pin\":0},\"path\":[[21,17],[23,17],[25,19],[27,19]]},{\"begin\":{\"element\":4,\"pin\":1},\"end\":{\"element\":1,\"pin\":0},\"path\":[[31,15],[33,15],[35,17],[37,17]]},{\"begin\":{\"element\":3,\"pin\":1},\"end\":{\"element\":1,\"pin\":0},\"path\":[[31,19],[33,19],[35,17],[37,17]]}]},\"oscilloscope\":{\"div size\":[100,100],\"signals\":[{\"color\":[255,128,64],\"v/div\":5,\"value\":\"VR\"},{\"color\":[64,255,128],\"v/div\":1,\"value\":\"IM\"}],\"t/div\":1},\"simulation\":{\"playback speed\":1,\"tick time\":0.0001}}");
+    menu.addAction(tr("Serialize"), this, [this]() { qDebug() << serialize(); });
+    menu.addAction(tr("Deserialize"), this, [this]() {
+        deserialize("{\"circuit\":{\"current probes\":[],\"elements\":[{\"function\":\"5*sin(3.1415926*t)\",\"position\":[36,29],\"rotation\":1,\"type\":\"Source/Function Generator\"},{\"position\":[32,17],\"resistance\":1000,\"rotation\":0,\"type\":\"Resistor\"},{\"position\":[36,24],\"resistance\":1,\"rotation\":1,\"type\":\"Resistor\"},{\"position\":[36,33],\"rotation\":0,\"type\":\"Source/Ground\"},{\"icbo\":1e-12,\"position\":[40,21],\"rotation\":0,\"type\":\"Transistor/Diode\"},{\"icbo\":1e-12,\"position\":[32,32],\"rotation\":0,\"type\":\"Transistor/Diode\"},{\"icbo\":1e-12,\"position\":[40,32],\"rotation\":0,\"type\":\"Transistor/Diode\"},{\"icbo\":1e-12,\"position\":[32,21],\"rotation\":0,\"type\":\"Transistor/Diode\"},{\"capacitance\":0.009999999776482582,\"initial voltage\":0,\"position\":[32,13],\"rotation\":0,\"type\":\"Capacity\"},{\"position\":[40,15],\"resistance\":10,\"rotation\":0,\"type\":\"Resistor\"}],\"voltage probes\":[{\"label\":\"vp\",\"position\":[36,15]},{\"label\":\"vn\",\"position\":[29,15]},{\"label\":\"vs\",\"position\":[36,21]}],\"wires\":[{\"begin\":{\"element\":0,\"pin\":1},\"end\":{\"element\":2,\"pin\":0},\"path\":[[36,27],[36,26]]},{\"begin\":{\"element\":3,\"pin\":0},\"end\":{\"element\":0,\"pin\":0},\"path\":[[36,33],[36,31]]},{\"begin\":{\"element\":8,\"pin\":1},\"end\":{\"element\":1,\"pin\":1},\"path\":[[34,13],[35,13],[35,17],[34,17]]},{\"begin\":{\"element\":9,\"pin\":0},\"end\":{\"element\":1,\"pin\":1},\"path\":[[38,15],[35,15],[35,17],[34,17]]},{\"begin\":{\"element\":8,\"pin\":0},\"end\":{\"element\":1,\"pin\":0},\"path\":[[30,13],[29,13],[29,17],[30,17]]},{\"begin\":{\"element\":7,\"pin\":1},\"end\":{\"element\":2,\"pin\":1},\"path\":[[34,21],[36,21],[36,22]]},{\"begin\":{\"element\":2,\"pin\":1},\"end\":{\"element\":4,\"pin\":0},\"path\":[[36,22],[36,21],[38,21]]},{\"begin\":{\"element\":0,\"pin\":0},\"end\":{\"element\":5,\"pin\":1},\"path\":[[36,31],[36,32],[34,32]]},{\"begin\":{\"element\":6,\"pin\":0},\"end\":{\"element\":0,\"pin\":0},\"path\":[[38,32],[36,32],[36,31]]},{\"begin\":{\"element\":9,\"pin\":1},\"end\":{\"element\":4,\"pin\":1},\"path\":[[42,15],[43,15],[43,21],[42,21]]},{\"begin\":{\"element\":9,\"pin\":1},\"end\":{\"element\":6,\"pin\":1},\"path\":[[42,15],[43,15],[43,32],[42,32]]},{\"begin\":{\"element\":1,\"pin\":0},\"end\":{\"element\":7,\"pin\":0},\"path\":[[30,17],[29,17],[29,21],[30,21]]},{\"begin\":{\"element\":1,\"pin\":0},\"end\":{\"element\":5,\"pin\":0},\"path\":[[30,17],[29,17],[29,32],[30,32]]}]},\"oscilloscope\":{\"div size\":[100,100],\"signals\":[{\"color\":[255,128,64],\"v/div\":2.5,\"value\":\"vs\"},{\"color\":[64,255,128],\"v/div\":2.5,\"value\":\"vp-vn\"}],\"t/div\":1},\"simulation\":{\"iterate level\":1,\"max acceptable error\":9.999999960041972e-13,\"max iterations\":64,\"playback speed\":1,\"tick time\":0.0010000000474974513}}");
     });
     menu.exec(event->globalPos());
 }

@@ -16,9 +16,16 @@
 #include "Simulation/Net.h"
 #include "EditorElement.h"
 #include "EditorWire.h"
+
 #include "Elements/EditorGround.h"
 #include "Elements/EditorVCC.h"
+#include "Elements/EditorCurrentSource.h"
+#include "Elements/EditorVoltageSource.h"
+#include "Elements/EditorFunctionGenerator.h"
 #include "Elements/EditorResistor.h"
+#include "Elements/EditorCapacity.h"
+#include "Elements/EditorInductor.h"
+#include "Elements/EditorDiode.h"
 
 #ifdef QT_DEBUG
 #include <QDebug>
@@ -64,6 +71,7 @@ EditorWidget::CurrentProbe *EditorWidget::CurrentProbe::fromJson(EditorWidget *e
     element = editor->m_elements.at(json["element"].toInt());
     pin = json["pin"].toInt();
     label = json["label"].toString();
+    inspector->updateParameters();
     return this;
 }
 
@@ -105,6 +113,7 @@ EditorWidget::VoltageProbe *EditorWidget::VoltageProbe::fromJson(const QJsonObje
     QJsonArray posJson = json["position"].toArray();
     pos = QPoint(posJson[0].toInt(), posJson[1].toInt());
     label = json["label"].toString();
+    inspector->updateParameters();
     return this;
 }
 
@@ -129,10 +138,26 @@ EditorWidget::EditorWidget(MainWindow *parent) : QWidget(parent)
     m_inspector = new ParametersInputWidget();
     m_inspector->addParameter(&parent->m_tickTime, tr("Tick Time"), PIWItemType(double));
     m_inspector->addParameter(&parent->m_playbackSpeed, tr("Playback Speed"), PIWItemType(double));
+    m_inspector->addParameter(&parent->m_maxIterations, tr("Max Iterations"), PIWItemType(int));
+    m_inspector->addParameter(&parent->m_maxAcceptableError, tr("Max Acceptable Error"), PIWItemType(double));
+    m_inspector->addParameter(&parent->m_iterateLevel, tr("Iterate Level"), &ParametersInputWidget::display_int,
+                              [](void *parameter, const QString &str) {
+                                  bool ok;
+                                  int tmp = str.toInt(&ok);
+                                  if (!ok || tmp < 0 || tmp > 2) return false;
+                                  *(int *) parameter = tmp;
+                                  return true;
+                              });
 
     Editor::Element::registerElement<Editor::Ground>(tr("Source/Ground"));
     Editor::Element::registerElement<Editor::VCC>(tr("Source/VCC"));
+    Editor::Element::registerElement<Editor::CurrentSource>(tr("Source/Current Source"));
+    Editor::Element::registerElement<Editor::VoltageSource>(tr("Source/Voltage Source"));
+    Editor::Element::registerElement<Editor::FunctionGenerator>(tr("Source/Function Generator"));
     Editor::Element::registerElement<Editor::Resistor>(tr("Resistor"));
+    Editor::Element::registerElement<Editor::Capacity>(tr("Capacity"));
+    Editor::Element::registerElement<Editor::Inductor>(tr("Inductor"));
+    Editor::Element::registerElement<Editor::Diode>(tr("Transistor/Diode"));
 }
 
 EditorWidget::~EditorWidget()
@@ -141,6 +166,11 @@ EditorWidget::~EditorWidget()
     delete m_inspector;
     for (auto iter = m_currentProbes.begin(); iter != m_currentProbes.end(); iter ++) delete *iter;
     for (auto iter = m_voltageProbes.begin(); iter != m_voltageProbes.end(); iter ++) delete *iter;
+}
+
+ParametersInputWidget *EditorWidget::inspector()
+{
+    return m_inspector;
 }
 
 QJsonObject EditorWidget::toJson()
@@ -197,6 +227,8 @@ void EditorWidget::fromJson(const QJsonObject &json)
     QJsonArray volProbeArray = json["voltage probes"].toArray();
     for (auto iter = volProbeArray.begin(); iter != volProbeArray.end(); iter ++)
         m_voltageProbes.append((new VoltageProbe(this))->fromJson(iter->toObject()));
+
+    m_inspector->updateParameters();
 
     m_posx = m_posy = 0;
     m_scale = 16;
@@ -614,8 +646,6 @@ void EditorWidget::wheelEvent(QWheelEvent *event)
     update();
 }
 
-#include <QJsonDocument>
-
 void EditorWidget::createContextMenu(QMenu *menu, QPoint pos)
 {
     QPoint uniPos = QPoint(round(UNI_X(pos.x())), round(UNI_Y(pos.y())));
@@ -748,6 +778,9 @@ void EditorWidget::startPlacingCurProbe()
 void EditorWidget::startSimultaion()
 {
     CirSim::Circuit *cir = new CirSim::Circuit();
+    cir->maxIterations = ((MainWindow *) parent())->m_maxIterations;
+    cir->maxAcceptableError = ((MainWindow *) parent())->m_maxAcceptableError;
+    cir->iterateLevel = (CirSim::Circuit::IterateLevel) ((MainWindow *) parent())->m_iterateLevel;
     QHash<Editor::Element *, QVector<CirSim::Pin *>> pinMap;
     for (auto iter = m_elements.begin(); iter != m_elements.end(); iter ++)
         pinMap.insert(*iter, (*iter)->createElement(cir));

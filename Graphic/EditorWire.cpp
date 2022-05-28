@@ -22,7 +22,7 @@ Wire::~Wire()
 {
     m_widget->m_wires.removeOne(this);
     if (m_elements[0]) m_widget->m_wireMap[m_elements[0]].removeOne(this);
-    if (m_elements[1]) m_widget->m_wireMap[m_elements[1]].removeOne(this);
+    if (m_elements[1] && m_elements[0] != m_elements[1]) m_widget->m_wireMap[m_elements[1]].removeOne(this);
 }
 
 Element *Wire::element(int index) const
@@ -55,7 +55,7 @@ void Wire::stopRecording(Element *element, int pin)
     m_elements[1] = element;
     m_pins[1] = pin;
     m_path.append(element->pinPos(pin));
-    m_widget->m_wireMap[element].append(this);
+    if (m_elements[0] != m_elements[1]) m_widget->m_wireMap[element].append(this);
     m_widget->update();
 }
 

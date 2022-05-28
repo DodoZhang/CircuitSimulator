@@ -89,7 +89,7 @@ QJsonObject VCC::toJson()
 
 void VCC::fromJson(const QJsonObject &json)
 {
-    Element::fromJson(json);
     m_label = json["label"].toString();
     m_voltage = json["voltage"].toDouble();
+    Element::fromJson(json);
 }
