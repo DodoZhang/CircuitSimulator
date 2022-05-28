@@ -90,6 +90,9 @@ public:
     void fromJson(const QJsonObject &json);
 
 protected:
+    QMenu *getElementMenu(QMenu *menu = nullptr, QPoint pos = QPoint());
+
+protected:
     void keyPressEvent(QKeyEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
@@ -105,8 +108,9 @@ protected slots:
     void flipVertical();
     void startPlacingWire();
     void startPlacingCurProbe();
-    void startSimultaion();
-    void stopSimultaion();
+    void startSimulation();
+    void stopSimulation();
+    void toggleSimulation();
     void updateSlot();
 };
 

@@ -3,8 +3,11 @@
 #include <QDateTime>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QMenuBar>
 #include <QMenu>
 #include <QContextMenuEvent>
+#include <QFileDialog>
+#include <QMessageBox>
 
 #include "Graphic/EditorWidget.h"
 
@@ -23,7 +26,7 @@
 #endif
 
 MainWindow::OscDockWidget::OscDockWidget(MainWindow *parent)
-    : QDockWidget(parent)
+    : QDockWidget(tr("Oscilloscope"), parent)
 {
     m_oscilloscope = new OscilloscopeWidget(this);
     setWidget(m_oscilloscope);
@@ -54,25 +57,41 @@ MainWindow::MainWindow(QWidget *parent)
     m_iterateLevel = 2;
     m_timer = new QBasicTimer();
     m_circuit = nullptr;
+    m_hasFilePath = false;
+
+    QMenuBar *mb = menuBar();
+    QMenu *fileMenu = new QMenu(tr("File"), mb);
+    fileMenu->addAction(tr("New"), this, &MainWindow::newFile, QKeySequence::New);
+    fileMenu->addAction(tr("Open"), this, &MainWindow::openFile, QKeySequence::Open);
+    fileMenu->addAction(tr("Save"), this, &MainWindow::saveFile, QKeySequence::Save);
+    fileMenu->addAction(tr("Save As"), this, &MainWindow::saveAsFile, QKeySequence::SaveAs);
+    mb->addMenu(fileMenu);
 
     m_editor = new EditorWidget(this);
     setCentralWidget(m_editor);
     m_oscilloscopeDock = new OscDockWidget(this);
-    m_inspectorDock = new QDockWidget(this);
+    m_inspectorDock = new QDockWidget(tr("Inspector"), this);
     m_inspectorDock->setWidget(m_editor->inspector());
     addDockWidget(Qt::RightDockWidgetArea, m_inspectorDock);
-//    m_inspectorDock->setFloating(true);
 
-//    startSimulation();
+    QMenu *windowMenu = new QMenu(tr("Window"), mb);
+    windowMenu->addAction(tr("Inspector"), this, [this]() {
+        if (m_inspectorDock->isHidden()) m_inspectorDock->show();
+        else m_inspectorDock->hide();
+    });
+    windowMenu->addAction(tr("Oscilloscope"), this, [this]() {
+        if (m_oscilloscopeDock->isHidden()) m_oscilloscopeDock->show();
+        else m_oscilloscopeDock->hide();
+    });
+    mb->addMenu(windowMenu);
+
+    setWindowTitle(tr("Untitled") + tr(" - Circuit Simulator"));
 }
 
 MainWindow::~MainWindow()
 {
     stopSimulation();
-    delete m_inspectorDock;
-    delete m_oscilloscopeDock;
     delete m_timer;
-    // TODO release other resources;
 }
 
 void MainWindow::setInspector(QWidget *inspector)
@@ -122,11 +141,6 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event)
     else menu.addAction(tr("Hide Oscilloscope"), m_oscilloscopeDock, &QDockWidget::hide);
     menu.addSeparator();
     m_editor->createContextMenu(&menu, event->pos());
-    menu.addSeparator();
-    menu.addAction(tr("Serialize"), this, [this]() { qDebug() << serialize(); });
-    menu.addAction(tr("Deserialize"), this, [this]() {
-        deserialize("{\"circuit\":{\"current probes\":[],\"elements\":[{\"function\":\"5*sin(3.1415926*t)\",\"position\":[36,29],\"rotation\":1,\"type\":\"Source/Function Generator\"},{\"position\":[32,17],\"resistance\":1000,\"rotation\":0,\"type\":\"Resistor\"},{\"position\":[36,24],\"resistance\":1,\"rotation\":1,\"type\":\"Resistor\"},{\"position\":[36,33],\"rotation\":0,\"type\":\"Source/Ground\"},{\"icbo\":1e-12,\"position\":[40,21],\"rotation\":0,\"type\":\"Transistor/Diode\"},{\"icbo\":1e-12,\"position\":[32,32],\"rotation\":0,\"type\":\"Transistor/Diode\"},{\"icbo\":1e-12,\"position\":[40,32],\"rotation\":0,\"type\":\"Transistor/Diode\"},{\"icbo\":1e-12,\"position\":[32,21],\"rotation\":0,\"type\":\"Transistor/Diode\"},{\"capacitance\":0.009999999776482582,\"initial voltage\":0,\"position\":[32,13],\"rotation\":0,\"type\":\"Capacity\"},{\"position\":[40,15],\"resistance\":10,\"rotation\":0,\"type\":\"Resistor\"}],\"voltage probes\":[{\"label\":\"vp\",\"position\":[36,15]},{\"label\":\"vn\",\"position\":[29,15]},{\"label\":\"vs\",\"position\":[36,21]}],\"wires\":[{\"begin\":{\"element\":0,\"pin\":1},\"end\":{\"element\":2,\"pin\":0},\"path\":[[36,27],[36,26]]},{\"begin\":{\"element\":3,\"pin\":0},\"end\":{\"element\":0,\"pin\":0},\"path\":[[36,33],[36,31]]},{\"begin\":{\"element\":8,\"pin\":1},\"end\":{\"element\":1,\"pin\":1},\"path\":[[34,13],[35,13],[35,17],[34,17]]},{\"begin\":{\"element\":9,\"pin\":0},\"end\":{\"element\":1,\"pin\":1},\"path\":[[38,15],[35,15],[35,17],[34,17]]},{\"begin\":{\"element\":8,\"pin\":0},\"end\":{\"element\":1,\"pin\":0},\"path\":[[30,13],[29,13],[29,17],[30,17]]},{\"begin\":{\"element\":7,\"pin\":1},\"end\":{\"element\":2,\"pin\":1},\"path\":[[34,21],[36,21],[36,22]]},{\"begin\":{\"element\":2,\"pin\":1},\"end\":{\"element\":4,\"pin\":0},\"path\":[[36,22],[36,21],[38,21]]},{\"begin\":{\"element\":0,\"pin\":0},\"end\":{\"element\":5,\"pin\":1},\"path\":[[36,31],[36,32],[34,32]]},{\"begin\":{\"element\":6,\"pin\":0},\"end\":{\"element\":0,\"pin\":0},\"path\":[[38,32],[36,32],[36,31]]},{\"begin\":{\"element\":9,\"pin\":1},\"end\":{\"element\":4,\"pin\":1},\"path\":[[42,15],[43,15],[43,21],[42,21]]},{\"begin\":{\"element\":9,\"pin\":1},\"end\":{\"element\":6,\"pin\":1},\"path\":[[42,15],[43,15],[43,32],[42,32]]},{\"begin\":{\"element\":1,\"pin\":0},\"end\":{\"element\":7,\"pin\":0},\"path\":[[30,17],[29,17],[29,21],[30,21]]},{\"begin\":{\"element\":1,\"pin\":0},\"end\":{\"element\":5,\"pin\":0},\"path\":[[30,17],[29,17],[29,32],[30,32]]}]},\"oscilloscope\":{\"div size\":[100,100],\"signals\":[{\"color\":[255,128,64],\"v/div\":2.5,\"value\":\"vs\"},{\"color\":[64,255,128],\"v/div\":2.5,\"value\":\"vp-vn\"}],\"t/div\":1},\"simulation\":{\"iterate level\":1,\"max acceptable error\":9.999999960041972e-13,\"max iterations\":64,\"playback speed\":1,\"tick time\":0.0010000000474974513}}");
-    });
     menu.exec(event->globalPos());
 }
 
@@ -164,4 +178,81 @@ void MainWindow::startSimulation()
 void MainWindow::stopSimulation()
 {
     m_timer->stop();
+}
+
+void MainWindow::newFile()
+{
+    if (isSimulating())
+    {
+        stopSimulation();
+        delete m_circuit;
+        m_circuit = nullptr;
+        m_currentProbes.clear();
+        m_voltageProbes.clear();
+    }
+    m_hasFilePath = false;
+    deserialize("{\"circuit\":{\"current probes\":[],\"elements\":[],\"voltage probes\":[],\"wires\":[]},"
+                "\"oscilloscope\":{\"div size\":[100,100],\"signals\":[{\"color\":[255,128,64],\"v/div\":1,\"value\":\"0\"}],"
+                "\"t/div\":1},\"simulation\":{\"iterate level\":2,\"max acceptable error\":1e-12,\"max iterations\":64,"
+                "\"playback speed\":1,\"tick time\":0.0001}}");
+    setWindowTitle(tr("Untitled") + tr(" - Circuit Simulator"));
+}
+
+void MainWindow::saveFile()
+{
+    QFile file;
+    if (m_hasFilePath) file.setFileName(m_filePath);
+    if (!m_hasFilePath || !file.exists())
+    {
+        QString path = QFileDialog::getSaveFileName(this, tr("Save File"), m_hasFilePath ? m_filePath : tr("Untitled") + ".cir", tr("Circuit File (*.cir)"));
+        if (path.isNull()) return;
+        int tmp = path.lastIndexOf('/');
+        QDir::setCurrent(path.left(tmp));
+        QString fileName = path.right(path.length() - tmp - 1);
+        file.setFileName(fileName);
+        m_filePath = path;
+        m_hasFilePath = true;
+        setWindowTitle(fileName.left(fileName.lastIndexOf('.')) + tr(" - Circuit Simulator"));
+    }
+    file.open(QIODevice::WriteOnly | QIODevice::Text);
+    file.write(serialize());
+}
+
+void MainWindow::saveAsFile()
+{
+    QString path = QFileDialog::getSaveFileName(this, tr("Save File As"), m_hasFilePath ? m_filePath : "Untitled.cir", tr("Circuit File (*.cir)"));
+    if (path.isNull()) return;
+    int tmp = path.lastIndexOf('/');
+    QDir::setCurrent(path.left(tmp));
+    QString fileName = path.right(path.length() - tmp - 1);
+    QFile file(fileName);
+    m_filePath = path;
+    m_hasFilePath = true;
+    file.open(QFile::WriteOnly);
+    file.write(serialize());
+    setWindowTitle(fileName.left(fileName.lastIndexOf('.')) + tr(" - Circuit Simulator"));
+}
+
+void MainWindow::openFile()
+{
+    if (isSimulating())
+    {
+        stopSimulation();
+        delete m_circuit;
+        m_circuit = nullptr;
+        m_currentProbes.clear();
+        m_voltageProbes.clear();
+    }
+    QString path = QFileDialog::getOpenFileName(this, tr("Open File"), m_hasFilePath ? m_filePath : "../", tr("Circuit File (*.cir)"));
+    if (path.isNull()) return;
+    int tmp = path.lastIndexOf('/');
+    QDir::setCurrent(path.left(tmp));
+    QString fileName = path.right(path.length() - tmp - 1);
+    QFile file(fileName);
+    if (!file.exists()) return;
+    m_filePath = path;
+    m_hasFilePath = true;
+    file.open(QFile::ReadOnly);
+    deserialize(file.readAll());
+    setWindowTitle(fileName.left(fileName.lastIndexOf('.')) + tr(" - Circuit Simulator"));
 }

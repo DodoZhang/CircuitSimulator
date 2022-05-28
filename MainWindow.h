@@ -59,6 +59,8 @@ protected:
 private:
     qint64 m_realTime;
     QBasicTimer *m_timer;
+    bool m_hasFilePath;
+    QString m_filePath;
 
 public:
     MainWindow(QWidget *parent = nullptr);
@@ -75,5 +77,9 @@ protected:
 public slots:
     void startSimulation();
     void stopSimulation();
+    void newFile();
+    void saveFile();
+    void saveAsFile();
+    void openFile();
 };
 #endif // MAINWINDOW_H

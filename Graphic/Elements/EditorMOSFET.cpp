@@ -153,7 +153,7 @@ void MOSFET::fromJson(const QJsonObject &json)
     Element::fromJson(json);
 }
 
-void MOSFET::parameterChanged(void *parameter)
+void MOSFET::parameterChanged(void *)
 {
     m_widget->update();
 }

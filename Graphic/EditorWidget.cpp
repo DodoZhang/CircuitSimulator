@@ -4,6 +4,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QPainter>
+#include <QMenuBar>
 #include <QMenu>
 #include <QKeyEvent>
 #include <QMouseEvent>
@@ -160,6 +161,27 @@ EditorWidget::EditorWidget(MainWindow *parent) : QWidget(parent)
     Editor::Element::registerElement<Editor::Inductor>(tr("Inductor"));
     Editor::Element::registerElement<Editor::Diode>(tr("Transistor/Diode"));
     Editor::Element::registerElement<Editor::MOSFET>(tr("Transistor/MOSFET"));
+
+    QMenuBar *mb = parent->menuBar();
+    QMenu *editMenu = new QMenu(tr("Edit"), mb);
+    editMenu->addAction(tr("Rotate 90°CCW"), this, &EditorWidget::rotateElementCCW, QKeySequence(Qt::Key_R));
+    editMenu->addAction(tr("Rotate 90°CW"), this, &EditorWidget::rotateElementCW, QKeySequence(Qt::SHIFT + Qt::Key_R));
+    editMenu->addAction(tr("Flip Horizontal"), this, &EditorWidget::flipHorizontal, QKeySequence(Qt::Key_X));
+    editMenu->addAction(tr("Flip Vertical"), this, &EditorWidget::flipVertical, QKeySequence(Qt::Key_Y));
+    mb->addMenu(editMenu);
+    QMenu *placeMenu = new QMenu(tr("Place"), mb);
+    placeMenu->addAction(tr("Wire"), this, &EditorWidget::startPlacingWire, QKeySequence(Qt::Key_W));
+    placeMenu->addSeparator();
+    placeMenu->addAction(tr("Current Probe"), this, &EditorWidget::startPlacingCurProbe, QKeySequence(Qt::Key_C));
+    placeMenu->addAction(tr("Voltage Probe"), this, [this]() {
+        m_voltageProbes.append(new VoltageProbe(this, QPoint(0, 0)));
+    }, QKeySequence(Qt::Key_V));
+    placeMenu->addSeparator();
+    getElementMenu(placeMenu);
+    mb->addMenu(placeMenu);
+    QMenu *simMenu = new QMenu(tr("Simulation"), mb);
+    simMenu->addAction(tr("Start/Stop Simulation"), this, &EditorWidget::toggleSimulation);
+    mb->addMenu(simMenu);
 }
 
 EditorWidget::~EditorWidget()
@@ -258,6 +280,38 @@ void EditorWidget::fromJson(const QJsonObject &json)
 #define UNI_P(px, py) UNI_X(px), UNI_Y(py)
 #define UNI_L(pl) ((pl) / m_scale)
 #define UNI_S(pw, ph) UNI_L(pw), UNI_L(ph)
+
+QMenu *EditorWidget::getElementMenu(QMenu *rootElementMenu, QPoint pos)
+{
+    QMap<QString, QMenu *> elementMenus;
+    elementMenus.insert("", rootElementMenu);
+    for (auto iter = Editor::Element::elementMap().cbegin();
+         iter != Editor::Element::elementMap().cend(); iter ++)
+    {
+        auto *func = iter.value();
+        QStringList parts = iter.key().split("/");
+        QString name = parts.last();
+        parts.pop_back();
+        QMenu *tmpMenu = rootElementMenu;
+        QString column = "";
+        while (parts.count()) {
+            column += parts.first();
+            if (elementMenus.contains(column)) tmpMenu = elementMenus[column];
+            else
+            {
+                QMenu *parentMenu = tmpMenu;
+                tmpMenu = new QMenu(parts.first(), parentMenu);
+                parentMenu->addMenu(tmpMenu);
+                elementMenus.insert(column, tmpMenu);
+            }
+            parts.pop_front();
+        }
+        tmpMenu->addAction(name, this, [this, func, pos]() {
+            func(this)->setPosition(pos);
+        });
+    }
+    return rootElementMenu;
+}
 
 void EditorWidget::paintEvent(QPaintEvent *event)
 {
@@ -377,13 +431,6 @@ void EditorWidget::resizeEvent(QResizeEvent *event)
 void EditorWidget::keyPressEvent(QKeyEvent *event)
 {
     switch (event->key()) {
-    case Qt::Key_R:
-        if (event->modifiers() & Qt::ShiftModifier) rotateElementCW();
-        else rotateElementCCW();
-        break;
-    case Qt::Key_X: flipHorizontal(); break;
-    case Qt::Key_Y: flipVertical(); break;
-    case Qt::Key_W: startPlacingWire(); break;
     case Qt::Key_Escape:
         if (m_placingWire)
         {
@@ -652,8 +699,8 @@ void EditorWidget::createContextMenu(QMenu *menu, QPoint pos)
 {
     QPoint uniPos = QPoint(round(UNI_X(pos.x())), round(UNI_Y(pos.y())));
 
-    if (((MainWindow *) parent())->isSimulating()) menu->addAction(tr("Stop Simulation"), this, &EditorWidget::stopSimultaion);
-    else menu->addAction(tr("Start Simulation"), this, &EditorWidget::startSimultaion);
+    if (((MainWindow *) parent())->isSimulating()) menu->addAction(tr("Stop Simulation"), this, &EditorWidget::stopSimulation);
+    else menu->addAction(tr("Start Simulation"), this, &EditorWidget::startSimulation);
     menu->addSeparator();
 
     if (m_selectedElement)
@@ -672,33 +719,7 @@ void EditorWidget::createContextMenu(QMenu *menu, QPoint pos)
     });
     probeMenu->addAction(tr("Current"), this, &EditorWidget::startPlacingCurProbe);
     menu->addMenu(probeMenu);
-    QMap<QString, QMenu *> elementMenus;
-    QMenu *rootElementMenu = new QMenu(tr("Place Element"), menu);
-    elementMenus.insert("", rootElementMenu);
-    for (auto iter = Editor::Element::elementMap().cbegin();
-         iter != Editor::Element::elementMap().cend(); iter ++)
-    {
-        auto *func = iter.value();
-        QStringList parts = iter.key().split("/");
-        QString name = parts.last();
-        parts.pop_back();
-        QMenu *tmpMenu = rootElementMenu;
-        QString column = "";
-        while (parts.count()) {
-            column += parts.first();
-            if (elementMenus.contains(column)) tmpMenu = elementMenus[column];
-            else
-            {
-                QMenu *parentMenu = tmpMenu;
-                tmpMenu = new QMenu(parts.first(), parentMenu);
-                parentMenu->addMenu(tmpMenu);
-                elementMenus.insert(column, tmpMenu);
-            }
-            parts.pop_front();
-        }
-        tmpMenu->addAction(name, this, [this, func, uniPos]() { func(this)->setPosition(uniPos); });
-    }
-    menu->addMenu(rootElementMenu);
+    menu->addMenu(getElementMenu(new QMenu(tr("Place Element"), menu), uniPos));
 }
 
 void EditorWidget::rotateElementCCW()
@@ -777,7 +798,7 @@ void EditorWidget::startPlacingCurProbe()
     }
 }
 
-void EditorWidget::startSimultaion()
+void EditorWidget::startSimulation()
 {
     CirSim::Circuit *cir = new CirSim::Circuit();
     cir->maxIterations = ((MainWindow *) parent())->m_maxIterations;
@@ -814,7 +835,7 @@ void EditorWidget::startSimultaion()
     mw->startSimulation();
 }
 
-void EditorWidget::stopSimultaion()
+void EditorWidget::stopSimulation()
 {
     auto *mw = (MainWindow *) parent();
     mw->stopSimulation();
@@ -822,6 +843,12 @@ void EditorWidget::stopSimultaion()
     mw->m_circuit = nullptr;
     mw->m_currentProbes.clear();
     mw->m_voltageProbes.clear();
+}
+
+void EditorWidget::toggleSimulation()
+{
+    if (((MainWindow *) parent())->isSimulating()) stopSimulation();
+    else startSimulation();
 }
 
 void EditorWidget::updateSlot()
