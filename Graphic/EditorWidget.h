@@ -76,21 +76,22 @@ private:
     CurrentProbe *m_selectedCurProbe;
     VoltageProbe *m_selectedVolProbe;
     bool m_unselectWhenRelease;
-    bool m_placingWire;
-    bool m_placeWireWhenRelease;
-    bool m_placingCurProbe;
-    bool m_placeCurProbeWhenRelease;
+    enum : unsigned short {
+        Nothing = 0, Element = 1, Wire = 2,
+        VolProbe = 3, CurProbe = 4
+    } m_placing;
+    bool m_placeWhenRelease;
 
 public:
     explicit EditorWidget(MainWindow *parent = nullptr);
     ~EditorWidget();
     ParametersInputWidget *inspector();
-    void createContextMenu(QMenu *menu, QPoint pos);
+    bool createContextMenu(QMenu *menu);
     QJsonObject toJson();
     void fromJson(const QJsonObject &json);
 
 protected:
-    QMenu *getElementMenu(QMenu *menu = nullptr, QPoint pos = QPoint());
+    QMenu *getElementMenu(QMenu *menu = nullptr);
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
@@ -106,8 +107,11 @@ protected slots:
     void rotateElementCW();
     void flipHorizontal();
     void flipVertical();
+    void startPlacingElement(Editor::Element *element);
     void startPlacingWire();
+    void startPlacingVolProbe();
     void startPlacingCurProbe();
+    void stopPlacing();
     void startSimulation();
     void stopSimulation();
     void toggleSimulation();

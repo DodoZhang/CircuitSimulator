@@ -140,7 +140,11 @@ void MainWindow::contextMenuEvent(QContextMenuEvent *event)
     if (m_oscilloscopeDock->isHidden()) menu.addAction(tr("Show Oscilloscope"), m_oscilloscopeDock, &QDockWidget::show);
     else menu.addAction(tr("Hide Oscilloscope"), m_oscilloscopeDock, &QDockWidget::hide);
     menu.addSeparator();
-    m_editor->createContextMenu(&menu, event->pos());
+    if (!m_editor->createContextMenu(&menu))
+    {
+        event->ignore();
+        return;
+    }
     menu.exec(event->globalPos());
 }
 

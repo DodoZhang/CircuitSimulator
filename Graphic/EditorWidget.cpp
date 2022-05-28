@@ -131,9 +131,8 @@ EditorWidget::EditorWidget(MainWindow *parent) : QWidget(parent)
     m_selectedCurProbe = nullptr;
     m_selectedVolProbe = nullptr;
     m_unselectWhenRelease = false;
-    m_placingWire = false;
-    m_placeWireWhenRelease = false;
-    m_placingCurProbe = false;
+    m_placing = Nothing;
+    m_placeWhenRelease = false;
 
     setFocusPolicy(Qt::ClickFocus);
 
@@ -173,9 +172,7 @@ EditorWidget::EditorWidget(MainWindow *parent) : QWidget(parent)
     placeMenu->addAction(tr("Wire"), this, &EditorWidget::startPlacingWire, QKeySequence(Qt::Key_W));
     placeMenu->addSeparator();
     placeMenu->addAction(tr("Current Probe"), this, &EditorWidget::startPlacingCurProbe, QKeySequence(Qt::Key_C));
-    placeMenu->addAction(tr("Voltage Probe"), this, [this]() {
-        m_voltageProbes.append(new VoltageProbe(this, QPoint(0, 0)));
-    }, QKeySequence(Qt::Key_V));
+    placeMenu->addAction(tr("Voltage Probe"), this, &EditorWidget::startPlacingVolProbe, QKeySequence(Qt::Key_V));
     placeMenu->addSeparator();
     getElementMenu(placeMenu);
     mb->addMenu(placeMenu);
@@ -263,9 +260,8 @@ void EditorWidget::fromJson(const QJsonObject &json)
     m_selectedCurProbe = nullptr;
     m_selectedVolProbe = nullptr;
     m_unselectWhenRelease = false;
-    m_placingWire = false;
-    m_placeWireWhenRelease = false;
-    m_placingCurProbe = false;
+    m_placing = Nothing;
+    m_placeWhenRelease = false;
 
     update();
 }
@@ -281,7 +277,7 @@ void EditorWidget::fromJson(const QJsonObject &json)
 #define UNI_L(pl) ((pl) / m_scale)
 #define UNI_S(pw, ph) UNI_L(pw), UNI_L(ph)
 
-QMenu *EditorWidget::getElementMenu(QMenu *rootElementMenu, QPoint pos)
+QMenu *EditorWidget::getElementMenu(QMenu *rootElementMenu)
 {
     QMap<QString, QMenu *> elementMenus;
     elementMenus.insert("", rootElementMenu);
@@ -306,8 +302,8 @@ QMenu *EditorWidget::getElementMenu(QMenu *rootElementMenu, QPoint pos)
             }
             parts.pop_front();
         }
-        tmpMenu->addAction(name, this, [this, func, pos]() {
-            func(this)->setPosition(pos);
+        tmpMenu->addAction(name, this, [this, func]() {
+            startPlacingElement(func(this));
         });
     }
     return rootElementMenu;
@@ -391,7 +387,9 @@ void EditorWidget::paintEvent(QPaintEvent *event)
     }
 
     // Paint Placing Wire
-    if (m_placingWire)
+    switch (m_placing) {
+    case Element: break;
+    case Wire:
     {
         int uniX = round(UNI_X(m_prevMousePos.x())), uniY = round(UNI_Y(m_prevMousePos.y()));
         painter.setPen(QPen(QColor(32, 32, 32), 1, Qt::DashLine));
@@ -406,15 +404,27 @@ void EditorWidget::paintEvent(QPaintEvent *event)
         painter.setPen(QPen(QColor(32, 32, 32), 2));
         painter.drawLine(SCR_X(uniX - 0.5f), SCR_Y(uniY), SCR_X(uniX + 0.5f), SCR_Y(uniY));
         painter.drawLine(SCR_X(uniX), SCR_Y(uniY - 0.5f), SCR_X(uniX), SCR_Y(uniY + 0.5f));
+        break;
     }
-
-    // Paint Placing Current Probe
-    if (m_placingCurProbe)
+    case CurProbe:
     {
         int uniX = round(UNI_X(m_prevMousePos.x())), uniY = round(UNI_Y(m_prevMousePos.y()));
         painter.setPen(QPen(QColor(64, 128, 255), 2));
         painter.drawLine(SCR_X(uniX - 0.25f), SCR_Y(uniY - 0.25f), SCR_X(uniX + 0.25f), SCR_Y(uniY + 0.25f));
         painter.drawLine(SCR_X(uniX - 0.25f), SCR_Y(uniY + 0.25f), SCR_X(uniX + 0.25f), SCR_Y(uniY - 0.25f));
+        break;
+    }
+    case VolProbe:
+    {
+        int uniX = round(UNI_X(m_prevMousePos.x())), uniY = round(UNI_Y(m_prevMousePos.y()));
+        painter.setPen(QPen(QColor(64, 128, 255), 2));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawEllipse(SCR_P(uniX - 0.25, uniY - 0.25), SCR_S(0.5, 0.5));
+        painter.drawLine(SCR_P(uniX + 0.177, uniY - 0.177), SCR_P(uniX + 1, uniY - 1));
+        painter.drawLine(SCR_P(uniX + 1, uniY - 1), SCR_P(uniX + 1.5, uniY - 1));
+        break;
+    }
+    case Nothing: break;
     }
 
     painter.end();
@@ -432,17 +442,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *event)
 {
     switch (event->key()) {
     case Qt::Key_Escape:
-        if (m_placingWire)
-        {
-            delete m_selectedWire;
-            m_placingWire = false;
-            setMouseTracking(false);
-        }
-        if (m_placingCurProbe)
-        {
-            m_placingCurProbe = false;
-            setMouseTracking(false);
-        }
+        stopPlacing();
         m_selectedElement = nullptr;
         m_selectedWire = nullptr;
         m_selectedCurProbe = nullptr;
@@ -450,6 +450,7 @@ void EditorWidget::keyPressEvent(QKeyEvent *event)
         update();
         break;
     case Qt::Key_Backspace:
+        if (m_placing) break;
         if (m_selectedElement)
         {
             for (auto iter = m_currentProbes.begin(); iter != m_currentProbes.end();)
@@ -466,7 +467,6 @@ void EditorWidget::keyPressEvent(QKeyEvent *event)
         }
         else if (m_selectedWire)
         {
-            if (m_placingWire) break;
             delete m_selectedWire;
             m_selectedWire = nullptr;
             update();
@@ -500,16 +500,8 @@ void EditorWidget::mousePressEvent(QMouseEvent *event)
         CurrentProbe *tmpSelectedCurProbe = nullptr;
         VoltageProbe *tmpSelectedVolProbe = nullptr;
 
-        if (m_placingWire)
-        {
-            m_placeWireWhenRelease = true;
-            m_isDragingScreen = true;
-            goto finishEvent;
-        }
-
-        if (m_placingCurProbe)
-        {
-            m_placeCurProbeWhenRelease = true;
+        if (m_placing) {
+            m_placeWhenRelease = true;
             m_isDragingScreen = true;
             goto finishEvent;
         }
@@ -604,17 +596,16 @@ void EditorWidget::mouseMoveEvent(QMouseEvent *event)
         m_posy += UNI_L(m_prevMousePos.y() - event->pos().y());
         m_prevMousePos = event->pos();
         m_unselectWhenRelease = false;
-        m_placeWireWhenRelease = false;
-        m_placeCurProbeWhenRelease = false;
+        m_placeWhenRelease = false;
         update();
     }
-    else if (m_placingWire)
+    else if (m_placing)
     {
-        m_prevMousePos = event->pos();
-        update();
-    }
-    else if (m_placingCurProbe)
-    {
+        if (m_placing == Element)
+        {
+            QPoint uniPos = QPoint(round(UNI_X(m_prevMousePos.x())),round(UNI_Y(m_prevMousePos.y())));
+            m_selectedElement->setPosition(uniPos);
+        }
         m_prevMousePos = event->pos();
         update();
     }
@@ -635,52 +626,81 @@ void EditorWidget::mouseReleaseEvent(QMouseEvent *event)
         m_unselectWhenRelease = false;
         update();
     }
-    if (m_placeWireWhenRelease)
+    if (m_placeWhenRelease)
     {
-        QPoint uniPos = QPoint(round(UNI_X(m_prevMousePos.x())),round(UNI_Y(m_prevMousePos.y())));
-        if (m_selectedWire->element(0))
+        switch (m_placing) {
+        case Element:
         {
+            m_placing = Nothing;
+            setMouseTracking(false);
+            m_placeWhenRelease = false;
+            update();
+            break;
+        }
+        case Wire:
+        {
+            QPoint uniPos = QPoint(round(UNI_X(m_prevMousePos.x())),round(UNI_Y(m_prevMousePos.y())));
+            if (m_selectedWire->element(0))
+            {
+                for (auto iter = m_elements.begin(); iter != m_elements.end(); iter ++)
+                    for (int i = 0, s = (*iter)->pinCount(); i < s; i ++)
+                        if (uniPos == (*iter)->pinPos(i))
+                        {
+                            m_selectedWire->stopRecording(*iter, i);
+                            m_placing = Nothing;
+                            setMouseTracking(false);
+                            goto finishPlacingWire;
+                        }
+                m_selectedWire->recordNode(uniPos);
+            }
+            else
+            {
+                for (auto iter = m_elements.begin(); iter != m_elements.end(); iter ++)
+                    for (int i = 0, s = (*iter)->pinCount(); i < s; i ++)
+                        if (uniPos == (*iter)->pinPos(i))
+                        {
+                            m_selectedWire->startRecording(*iter, i);
+                            goto finishPlacingWire;
+                        }
+            }
+            finishPlacingWire:
+            m_placeWhenRelease = false;
+            update();
+            break;
+        }
+        case CurProbe:
+        {
+            QPoint uniPos = QPoint(round(UNI_X(m_prevMousePos.x())),round(UNI_Y(m_prevMousePos.y())));
             for (auto iter = m_elements.begin(); iter != m_elements.end(); iter ++)
                 for (int i = 0, s = (*iter)->pinCount(); i < s; i ++)
                     if (uniPos == (*iter)->pinPos(i))
                     {
-                        m_selectedWire->stopRecording(*iter, i);
-                        m_placingWire = false;
+                        m_selectedCurProbe = new CurrentProbe(this, *iter, i);
+                        m_currentProbes.append(m_selectedCurProbe);
+                        m_placing = Nothing;
                         setMouseTracking(false);
-                        goto finishPlacingWire;
+                        ((MainWindow *) parent())->setInspector(m_selectedCurProbe->inspector);
+                        goto finishplacingCurProbe;
                     }
-            m_selectedWire->recordNode(uniPos);
+            finishplacingCurProbe:
+            m_placeWhenRelease = false;
+            update();
+            break;
         }
-        else
+        case VolProbe:
         {
-            for (auto iter = m_elements.begin(); iter != m_elements.end(); iter ++)
-                for (int i = 0, s = (*iter)->pinCount(); i < s; i ++)
-                    if (uniPos == (*iter)->pinPos(i))
-                    {
-                        m_selectedWire->startRecording(*iter, i);
-                        goto finishPlacingWire;
-                    }
+            QPoint uniPos = QPoint(round(UNI_X(m_prevMousePos.x())),round(UNI_Y(m_prevMousePos.y())));
+            m_selectedVolProbe = new VoltageProbe(this, uniPos);
+            m_voltageProbes.append(m_selectedVolProbe);
+            m_placing = Nothing;
+            setMouseTracking(false);
+            m_placeWhenRelease = false;
+            update();
+            break;
         }
-        finishPlacingWire:
-        m_placeWireWhenRelease = false;
-        update();
-    }
-    if (m_placeCurProbeWhenRelease)
-    {
-        QPoint uniPos = QPoint(round(UNI_X(m_prevMousePos.x())),round(UNI_Y(m_prevMousePos.y())));
-        for (auto iter = m_elements.begin(); iter != m_elements.end(); iter ++)
-            for (int i = 0, s = (*iter)->pinCount(); i < s; i ++)
-                if (uniPos == (*iter)->pinPos(i))
-                {
-                    m_selectedCurProbe = new CurrentProbe(this, *iter, i);
-                    m_currentProbes.append(m_selectedCurProbe);
-                    m_placingCurProbe = false;
-                    setMouseTracking(false);
-                    goto finishplacingCurProbe;
-                }
-        finishplacingCurProbe:
-        m_placeCurProbeWhenRelease = false;
-        update();
+        case Nothing:
+            m_placeWhenRelease = false;
+        }
     }
 }
 
@@ -695,10 +715,13 @@ void EditorWidget::wheelEvent(QWheelEvent *event)
     update();
 }
 
-void EditorWidget::createContextMenu(QMenu *menu, QPoint pos)
+bool EditorWidget::createContextMenu(QMenu *menu)
 {
-    QPoint uniPos = QPoint(round(UNI_X(pos.x())), round(UNI_Y(pos.y())));
-
+    if (m_placing)
+    {
+        stopPlacing();
+        return false;
+    }
     if (((MainWindow *) parent())->isSimulating()) menu->addAction(tr("Stop Simulation"), this, &EditorWidget::stopSimulation);
     else menu->addAction(tr("Start Simulation"), this, &EditorWidget::startSimulation);
     menu->addSeparator();
@@ -714,12 +737,11 @@ void EditorWidget::createContextMenu(QMenu *menu, QPoint pos)
 
     menu->addAction(tr("Place Wire"), this, &EditorWidget::startPlacingWire);
     QMenu *probeMenu = new QMenu(tr("Place Probe"), menu);
-    probeMenu->addAction(tr("Voltage"), this, [this, uniPos]() {
-        m_voltageProbes.append(new VoltageProbe(this, uniPos));
-    });
+    probeMenu->addAction(tr("Voltage"), this, &EditorWidget::startPlacingVolProbe);
     probeMenu->addAction(tr("Current"), this, &EditorWidget::startPlacingCurProbe);
     menu->addMenu(probeMenu);
-    menu->addMenu(getElementMenu(new QMenu(tr("Place Element"), menu), uniPos));
+    menu->addMenu(getElementMenu(new QMenu(tr("Place Element"), menu)));
+    return true;
 }
 
 void EditorWidget::rotateElementCCW()
@@ -770,32 +792,73 @@ void EditorWidget::flipVertical()
     }
 }
 
+void EditorWidget::startPlacingElement(Editor::Element *element)
+{
+    if (m_placing) return;
+    m_placing = Element;
+    m_selectedElement = element;
+    m_selectedWire = nullptr;
+    m_selectedCurProbe = nullptr;
+    m_selectedVolProbe = nullptr;
+    ((MainWindow *) parent())->setInspector(m_selectedElement->inspectorWidget());
+    setMouseTracking(true);
+    QPoint uniPos = QPoint(round(UNI_X(m_prevMousePos.x())),round(UNI_Y(m_prevMousePos.y())));
+    m_selectedElement->setPosition(uniPos);
+}
+
 void EditorWidget::startPlacingWire()
 {
-    if (m_placingCurProbe) return;
-    if (!m_placingWire)
-    {
-        m_placingWire = true;
-        m_selectedElement = nullptr;
-        m_selectedWire = new Editor::Wire(this);
-        m_selectedCurProbe = nullptr;
-        m_selectedVolProbe = nullptr;
-        setMouseTracking(true);
-    }
+    if (m_placing) return;
+    m_placing = Wire;
+    m_selectedElement = nullptr;
+    m_selectedWire = new Editor::Wire(this);
+    m_selectedCurProbe = nullptr;
+    m_selectedVolProbe = nullptr;
+    setMouseTracking(true);
+}
+
+void EditorWidget::startPlacingVolProbe()
+{
+    if (m_placing) return;
+    m_placing = VolProbe;
+    m_selectedElement = nullptr;
+    m_selectedWire = nullptr;
+    m_selectedCurProbe = nullptr;
+    m_selectedVolProbe = nullptr;
+    setMouseTracking(true);
 }
 
 void EditorWidget::startPlacingCurProbe()
 {
-    if (m_placingWire) return;
-    if (!m_placingCurProbe)
-    {
-        m_placingCurProbe = true;
+    if (m_placing) return;
+    m_placing = CurProbe;
+    m_selectedElement = nullptr;
+    m_selectedWire = nullptr;
+    m_selectedCurProbe = nullptr;
+    m_selectedVolProbe = nullptr;
+    setMouseTracking(true);
+}
+
+void EditorWidget::stopPlacing()
+{
+    switch (m_placing) {
+    case Element:
+        delete m_selectedElement;
         m_selectedElement = nullptr;
+        goto cleanUp;
+    case Wire:
+        delete m_selectedWire;
         m_selectedWire = nullptr;
-        m_selectedCurProbe = nullptr;
-        m_selectedVolProbe = nullptr;
-        setMouseTracking(true);
+        goto cleanUp;
+    case CurProbe:
+    case VolProbe:
+    cleanUp:
+        m_placing = Nothing;
+        m_placeWhenRelease = false;
+        setMouseTracking(false);
+    case Nothing: break;
     }
+    update();
 }
 
 void EditorWidget::startSimulation()

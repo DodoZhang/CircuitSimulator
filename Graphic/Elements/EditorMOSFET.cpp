@@ -79,7 +79,7 @@ void MOSFET::paintEvent(QPainter *painter)
     painter->drawLine(QLineF(1, 0, 1, 2));
     if (m_type == NChannel)
     {
-        if (m_turnOnVoltage >= 0)
+        if (m_turnOnVoltage < 0)
             painter->drawLine(QLineF(0, -1.1, 0, 1.1));
         else
         {
@@ -96,7 +96,7 @@ void MOSFET::paintEvent(QPainter *painter)
     }
     else
     {
-        if (m_turnOnVoltage < 0)
+        if (m_turnOnVoltage >= 0)
             painter->drawLine(QLineF(0, -1.1, 0, 1.1));
         else
         {
@@ -137,7 +137,7 @@ QString MOSFET::typeName()
 QJsonObject MOSFET::toJson()
 {
     QJsonObject json = Element::toJson();
-    json.insert("type", (bool) m_type);
+    json.insert("channel", (bool) m_type);
     json.insert("turn on voltage", m_turnOnVoltage);
     json.insert("conductivity constant", m_conductivityConstant);
     json.insert("channel length modulation", m_channelLengthModulation);
@@ -146,7 +146,7 @@ QJsonObject MOSFET::toJson()
 
 void MOSFET::fromJson(const QJsonObject &json)
 {
-    m_type = (ChannelType) json["type"].toBool();
+    m_type = (ChannelType) json["channel"].toBool();
     m_turnOnVoltage = json["turn on voltage"].toDouble();
     m_conductivityConstant = json["conductivity constant"].toDouble();
     m_channelLengthModulation = json["channel length modulation"].toDouble();
