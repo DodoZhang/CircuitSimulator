@@ -29,12 +29,13 @@
 #endif
 
 MainWindow::OscDockWidget::OscDockWidget(MainWindow *parent)
-    : QDockWidget(tr("Oscilloscope"), parent)
+    : QDockWidget(parent)
 {
     m_oscilloscope = new OscilloscopeWidget(this);
     setWidget(m_oscilloscope);
     setFloating(true);
     resize(800, 600);
+    setMinimumSize(400, 400);
     hide();
 }
 
@@ -88,8 +89,10 @@ MainWindow::MainWindow(QWidget *parent)
     m_editor = new EditorWidget(this);
     setCentralWidget(m_editor);
     m_oscilloscopeDock = new OscDockWidget(this);
+    m_oscilloscopeDock->setWindowTitle(tr("Oscilloscope"));
     m_inspectorDock = new QDockWidget(tr("Inspector"), this);
     m_inspectorDock->setWidget(m_editor->inspector());
+    m_inspectorDock->setMinimumSize(200, 200);
     addDockWidget(Qt::RightDockWidgetArea, m_inspectorDock);
 
     QMenu *windowMenu = new QMenu(tr("Window"), mb);
@@ -122,6 +125,7 @@ MainWindow::MainWindow(QWidget *parent)
     windowMenu->addMenu(languageMenu);
     mb->addMenu(windowMenu);
 
+    resize(1200, 800);
     setWindowTitle(tr("Untitled") + tr(" - Circuit Simulator"));
 }
 

@@ -30,6 +30,8 @@ ParametersInputWidget::ParametersInputWidget(QWidget *parent)
     : QTreeWidget(parent)
 {
     setColumnCount(2);
+    setColumnWidth(0, 150);
+    setColumnWidth(1, 100);
     setHeaderLabels({ tr("Key"), tr("Value") });
     connect(this, &QTreeWidget::itemChanged, this, &ParametersInputWidget::itemEdited);
 }

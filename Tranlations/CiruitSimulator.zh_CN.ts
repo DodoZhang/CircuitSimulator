@@ -182,142 +182,126 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../MainWindow.cpp" line="32"/>
-        <location filename="../MainWindow.cpp" line="103"/>
+        <location filename="../MainWindow.cpp" line="36"/>
+        <location filename="../MainWindow.cpp" line="104"/>
         <source>Oscilloscope</source>
         <translation>示波器</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="69"/>
+        <location filename="../MainWindow.cpp" line="70"/>
         <source>File</source>
         <translation>文件</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="70"/>
+        <location filename="../MainWindow.cpp" line="71"/>
         <source>New</source>
         <translation>新建</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="71"/>
+        <location filename="../MainWindow.cpp" line="72"/>
         <source>Open</source>
         <translation>打开</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="72"/>
+        <location filename="../MainWindow.cpp" line="73"/>
         <source>Save</source>
         <translation>保存</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="73"/>
+        <location filename="../MainWindow.cpp" line="74"/>
         <source>Save As</source>
         <translation>另存为</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="75"/>
+        <location filename="../MainWindow.cpp" line="76"/>
         <source>Open Example</source>
         <translation>打开示例</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="76"/>
         <location filename="../MainWindow.cpp" line="77"/>
+        <location filename="../MainWindow.cpp" line="78"/>
         <source>Capacitor Inductor Characteristics</source>
         <translation>电容电感特性</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="79"/>
         <location filename="../MainWindow.cpp" line="80"/>
+        <location filename="../MainWindow.cpp" line="81"/>
         <source>Full Bridge Rectifier</source>
         <translation>全桥整流器</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="82"/>
         <location filename="../MainWindow.cpp" line="83"/>
+        <location filename="../MainWindow.cpp" line="84"/>
         <source>MOSFET Amplifier Circuit</source>
-        <translation type="unfinished">MOSFET放大电路</translation>
+        <translation>MOSFET放大电路</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="91"/>
-        <location filename="../MainWindow.cpp" line="96"/>
+        <location filename="../MainWindow.cpp" line="92"/>
+        <location filename="../MainWindow.cpp" line="97"/>
         <source>Inspector</source>
         <translation>检查器</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="95"/>
+        <location filename="../MainWindow.cpp" line="96"/>
         <source>Window</source>
         <translation>窗口</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="112"/>
+        <location filename="../MainWindow.cpp" line="113"/>
         <source>Language</source>
         <translation>语言</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="114"/>
+        <location filename="../MainWindow.cpp" line="115"/>
         <source>English</source>
         <translation>英文</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="118"/>
+        <location filename="../MainWindow.cpp" line="119"/>
         <source>Chinese</source>
         <translation>简体中文</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="125"/>
-        <location filename="../MainWindow.cpp" line="238"/>
-        <location filename="../MainWindow.cpp" line="248"/>
+        <location filename="../MainWindow.cpp" line="127"/>
+        <location filename="../MainWindow.cpp" line="240"/>
+        <location filename="../MainWindow.cpp" line="250"/>
         <source>Untitled</source>
         <translation>未命名文件</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="125"/>
-        <location filename="../MainWindow.cpp" line="238"/>
-        <location filename="../MainWindow.cpp" line="256"/>
-        <location filename="../MainWindow.cpp" line="275"/>
-        <location filename="../MainWindow.cpp" line="300"/>
-        <location filename="../MainWindow.cpp" line="317"/>
+        <location filename="../MainWindow.cpp" line="127"/>
+        <location filename="../MainWindow.cpp" line="240"/>
+        <location filename="../MainWindow.cpp" line="258"/>
+        <location filename="../MainWindow.cpp" line="277"/>
+        <location filename="../MainWindow.cpp" line="302"/>
+        <location filename="../MainWindow.cpp" line="319"/>
         <source> - Circuit Simulator</source>
         <translation> - Circuit Simulator</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="324"/>
+        <location filename="../MainWindow.cpp" line="326"/>
         <source>You need to restart the application to change the language.</source>
         <translation>你需要重新启动应用程序以修改语言。</translation>
     </message>
     <message>
-        <source>Show Inspector</source>
-        <translation type="vanished">显示检查器</translation>
-    </message>
-    <message>
-        <source>Hide Inspector</source>
-        <translation type="vanished">隐藏检查器</translation>
-    </message>
-    <message>
-        <source>Show Oscilloscope</source>
-        <translation type="vanished">显示示波器</translation>
-    </message>
-    <message>
-        <source>Hide Oscilloscope</source>
-        <translation type="vanished">隐藏示波器</translation>
-    </message>
-    <message>
-        <location filename="../MainWindow.cpp" line="248"/>
+        <location filename="../MainWindow.cpp" line="250"/>
         <source>Save File</source>
         <translation>保存文件</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="248"/>
-        <location filename="../MainWindow.cpp" line="265"/>
-        <location filename="../MainWindow.cpp" line="289"/>
+        <location filename="../MainWindow.cpp" line="250"/>
+        <location filename="../MainWindow.cpp" line="267"/>
+        <location filename="../MainWindow.cpp" line="291"/>
         <source>Circuit File (*.cir)</source>
         <translation>电路文件 (*.cir)</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="265"/>
+        <location filename="../MainWindow.cpp" line="267"/>
         <source>Save File As</source>
         <translation>文件另存为</translation>
     </message>
     <message>
-        <location filename="../MainWindow.cpp" line="289"/>
+        <location filename="../MainWindow.cpp" line="291"/>
         <source>Open File</source>
         <translation>打开文件</translation>
     </message>
