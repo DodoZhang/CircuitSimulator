@@ -13,6 +13,7 @@ using namespace Editor;
 
 QMap<QString, Element *(*)(EditorWidget *)> Element::s_insFunc;
 QMap<Element *(*)(EditorWidget *), QString> Element::s_eleName;
+QMap<Element *(*)(EditorWidget *), QString> Element::s_dispName;
 
 Element *Element::instantiateFromJson(EditorWidget *widget, QJsonObject json)
 {

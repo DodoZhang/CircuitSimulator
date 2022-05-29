@@ -1,6 +1,9 @@
 #include "MainWindow.h"
 
+#include <QApplication>
+#include <QTranslator>
 #include <QDateTime>
+#include <QStandardPaths>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMenuBar>
@@ -58,6 +61,9 @@ MainWindow::MainWindow(QWidget *parent)
     m_timer = new QBasicTimer();
     m_circuit = nullptr;
     m_hasFilePath = false;
+    m_language = "en";
+
+    loadSettings();
 
     QMenuBar *mb = menuBar();
     QMenu *fileMenu = new QMenu(tr("File"), mb);
@@ -75,14 +81,33 @@ MainWindow::MainWindow(QWidget *parent)
     addDockWidget(Qt::RightDockWidgetArea, m_inspectorDock);
 
     QMenu *windowMenu = new QMenu(tr("Window"), mb);
-    windowMenu->addAction(tr("Inspector"), this, [this]() {
+    m_inspectorAction = windowMenu->addAction(tr("Inspector"), this, [this]() {
         if (m_inspectorDock->isHidden()) m_inspectorDock->show();
         else m_inspectorDock->hide();
+        m_inspectorAction->setChecked(!m_inspectorDock->isHidden());
     });
-    windowMenu->addAction(tr("Oscilloscope"), this, [this]() {
+    m_inspectorAction->setCheckable(true);
+    m_inspectorAction->setChecked(!m_inspectorDock->isHidden());
+    m_oscilloscopeAction = windowMenu->addAction(tr("Oscilloscope"), this, [this]() {
         if (m_oscilloscopeDock->isHidden()) m_oscilloscopeDock->show();
         else m_oscilloscopeDock->hide();
+        m_oscilloscopeAction->setChecked(!m_oscilloscopeDock->isHidden());
     });
+    m_oscilloscopeAction->setCheckable(true);
+    m_oscilloscopeAction->setChecked(!m_oscilloscopeDock->isHidden());
+    windowMenu->addSeparator();
+
+    QMenu *languageMenu = new QMenu(tr("Language"), windowMenu);
+    QAction *tmpAction;
+    tmpAction = languageMenu->addAction(tr("English"), this, [this]() { setLanguage("en"); });
+    tmpAction->setCheckable(true);
+    if (m_language == "en") tmpAction->setChecked(true);
+    m_languageActions.insert("en", tmpAction);
+    tmpAction = languageMenu->addAction(tr("Chinese"), this, [this]() { setLanguage("zh_CN"); });
+    tmpAction->setCheckable(true);
+    if (m_language == "zh_CN") tmpAction->setChecked(true);
+    m_languageActions.insert("zh_CN", tmpAction);
+    windowMenu->addMenu(languageMenu);
     mb->addMenu(windowMenu);
 
     setWindowTitle(tr("Untitled") + tr(" - Circuit Simulator"));
@@ -135,10 +160,8 @@ void MainWindow::deserialize(const QByteArray &bytes)
 void MainWindow::contextMenuEvent(QContextMenuEvent *event)
 {
     QMenu menu(this);
-    if (m_inspectorDock->isHidden()) menu.addAction(tr("Show Inspector"), m_inspectorDock, &QDockWidget::show);
-    else menu.addAction(tr("Hide Inspector"), m_inspectorDock, &QDockWidget::hide);
-    if (m_oscilloscopeDock->isHidden()) menu.addAction(tr("Show Oscilloscope"), m_oscilloscopeDock, &QDockWidget::show);
-    else menu.addAction(tr("Hide Oscilloscope"), m_oscilloscopeDock, &QDockWidget::hide);
+    menu.addAction(m_inspectorAction);
+    menu.addAction(m_oscilloscopeAction);
     menu.addSeparator();
     if (!m_editor->createContextMenu(&menu))
     {
@@ -208,7 +231,8 @@ void MainWindow::saveFile()
     if (m_hasFilePath) file.setFileName(m_filePath);
     if (!m_hasFilePath || !file.exists())
     {
-        QString path = QFileDialog::getSaveFileName(this, tr("Save File"), m_hasFilePath ? m_filePath : tr("Untitled") + ".cir", tr("Circuit File (*.cir)"));
+        QString docPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/CircuitSimulator";
+        QString path = QFileDialog::getSaveFileName(this, tr("Save File"), m_hasFilePath ? m_filePath : docPath + "/" + tr("Untitled") + ".cir", tr("Circuit File (*.cir)"));
         if (path.isNull()) return;
         int tmp = path.lastIndexOf('/');
         QDir::setCurrent(path.left(tmp));
@@ -224,7 +248,8 @@ void MainWindow::saveFile()
 
 void MainWindow::saveAsFile()
 {
-    QString path = QFileDialog::getSaveFileName(this, tr("Save File As"), m_hasFilePath ? m_filePath : "Untitled.cir", tr("Circuit File (*.cir)"));
+    QString docPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/CircuitSimulator";
+    QString path = QFileDialog::getSaveFileName(this, tr("Save File As"), m_hasFilePath ? m_filePath : docPath + "/" + "Untitled.cir", tr("Circuit File (*.cir)"));
     if (path.isNull()) return;
     int tmp = path.lastIndexOf('/');
     QDir::setCurrent(path.left(tmp));
@@ -232,7 +257,7 @@ void MainWindow::saveAsFile()
     QFile file(fileName);
     m_filePath = path;
     m_hasFilePath = true;
-    file.open(QFile::WriteOnly);
+    file.open(QFile::WriteOnly | QIODevice::Text);
     file.write(serialize());
     setWindowTitle(fileName.left(fileName.lastIndexOf('.')) + tr(" - Circuit Simulator"));
 }
@@ -247,7 +272,8 @@ void MainWindow::openFile()
         m_currentProbes.clear();
         m_voltageProbes.clear();
     }
-    QString path = QFileDialog::getOpenFileName(this, tr("Open File"), m_hasFilePath ? m_filePath : "../", tr("Circuit File (*.cir)"));
+    QString docPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/CircuitSimulator";
+    QString path = QFileDialog::getOpenFileName(this, tr("Open File"), m_hasFilePath ? m_filePath : docPath, tr("Circuit File (*.cir)"));
     if (path.isNull()) return;
     int tmp = path.lastIndexOf('/');
     QDir::setCurrent(path.left(tmp));
@@ -256,7 +282,54 @@ void MainWindow::openFile()
     if (!file.exists()) return;
     m_filePath = path;
     m_hasFilePath = true;
-    file.open(QFile::ReadOnly);
+    file.open(QFile::ReadOnly | QIODevice::Text);
     deserialize(file.readAll());
     setWindowTitle(fileName.left(fileName.lastIndexOf('.')) + tr(" - Circuit Simulator"));
+}
+
+void MainWindow::setLanguage(const QString language)
+{
+    if (language == m_language) return;
+    QMessageBox msgBox;
+    msgBox.setText(tr("You need to restart the application to change the language."));
+    msgBox.exec();
+    m_languageActions[m_language]->setChecked(false);
+    m_language = language;
+    m_languageActions[m_language]->setChecked(true);
+    saveSettings();
+}
+
+void MainWindow::loadSettings()
+{
+    QString docPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/CircuitSimulator";
+    QDir docDir(docPath);
+    if (!docDir.exists()) docDir.mkdir(docPath);
+    QDir::setCurrent(docPath);
+    QFile settingsFile(".settings");
+    if (settingsFile.exists())
+    {
+        settingsFile.open(QFile::ReadOnly | QIODevice::Text);
+        QJsonObject obj = QJsonDocument::fromJson(settingsFile.readAll()).object();
+        m_language = obj["language"].toString("en");
+        if (m_language != "en")
+        {
+            m_translator = new QTranslator();
+            m_translator->load(":/Translations/CiruitSimulator." + m_language + ".qm");
+            QApplication::installTranslator(m_translator);
+        }
+    }
+    else saveSettings();
+}
+
+void MainWindow::saveSettings()
+{
+    QString docPath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/CircuitSimulator";
+    QDir docDir(docPath);
+    if (!docDir.exists()) docDir.mkdir(docPath);
+    QDir::setCurrent(docPath);
+    QFile settingsFile(".settings");
+    settingsFile.open(QFile::WriteOnly | QIODevice::Text);
+    QJsonObject obj;
+    obj.insert("language", m_language);
+    settingsFile.write(QJsonDocument(obj).toJson(QJsonDocument::Compact));
 }

@@ -3,7 +3,10 @@
 
 #include <QMainWindow>
 #include <QDockWidget>
+#include <QMap>
 #include <QBasicTimer>
+
+class QTranslator;
 
 namespace CirSim {
 class Circuit;
@@ -61,6 +64,10 @@ private:
     QBasicTimer *m_timer;
     bool m_hasFilePath;
     QString m_filePath;
+    QString m_language;
+    QTranslator *m_translator;
+    QAction *m_inspectorAction, *m_oscilloscopeAction;
+    QMap<QString, QAction *> m_languageActions;
 
 public:
     MainWindow(QWidget *parent = nullptr);
@@ -81,5 +88,10 @@ public slots:
     void saveFile();
     void saveAsFile();
     void openFile();
+
+protected slots:
+    void setLanguage(const QString language);
+    void loadSettings();
+    void saveSettings();
 };
 #endif // MAINWINDOW_H

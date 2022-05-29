@@ -150,16 +150,16 @@ EditorWidget::EditorWidget(MainWindow *parent) : QWidget(parent)
                                   return true;
                               });
 
-    Editor::Element::registerElement<Editor::Ground>(tr("Source/Ground"));
-    Editor::Element::registerElement<Editor::VCC>(tr("Source/VCC"));
-    Editor::Element::registerElement<Editor::CurrentSource>(tr("Source/Current Source"));
-    Editor::Element::registerElement<Editor::VoltageSource>(tr("Source/Voltage Source"));
-    Editor::Element::registerElement<Editor::FunctionGenerator>(tr("Source/Function Generator"));
-    Editor::Element::registerElement<Editor::Resistor>(tr("Resistor"));
-    Editor::Element::registerElement<Editor::Capacity>(tr("Capacity"));
-    Editor::Element::registerElement<Editor::Inductor>(tr("Inductor"));
-    Editor::Element::registerElement<Editor::Diode>(tr("Transistor/Diode"));
-    Editor::Element::registerElement<Editor::MOSFET>(tr("Transistor/MOSFET"));
+    Editor::Element::registerElement<Editor::Ground>("Source/Ground", tr("Source/Ground"));
+    Editor::Element::registerElement<Editor::VCC>("Source/VCC", tr("Source/VCC"));
+    Editor::Element::registerElement<Editor::CurrentSource>("Source/Current Source", tr("Source/Current Source"));
+    Editor::Element::registerElement<Editor::VoltageSource>("Source/Voltage Source", tr("Source/Voltage Source"));
+    Editor::Element::registerElement<Editor::FunctionGenerator>("Source/Function Generator", tr("Source/Function Generator"));
+    Editor::Element::registerElement<Editor::Resistor>("Resistor", tr("Resistor"));
+    Editor::Element::registerElement<Editor::Capacity>("Capacity", tr("Capacity"));
+    Editor::Element::registerElement<Editor::Inductor>("Inductor", tr("Inductor"));
+    Editor::Element::registerElement<Editor::Diode>("Transistor/Diode", tr("Transistor/Diode"));
+    Editor::Element::registerElement<Editor::MOSFET>("Transistor/MOSFET", tr("Transistor/MOSFET"));
 
     QMenuBar *mb = parent->menuBar();
     QMenu *editMenu = new QMenu(tr("Edit"), mb);
@@ -281,11 +281,11 @@ QMenu *EditorWidget::getElementMenu(QMenu *rootElementMenu)
 {
     QMap<QString, QMenu *> elementMenus;
     elementMenus.insert("", rootElementMenu);
-    for (auto iter = Editor::Element::elementMap().cbegin();
-         iter != Editor::Element::elementMap().cend(); iter ++)
+    for (auto iter = Editor::Element::s_dispName.cbegin();
+         iter != Editor::Element::s_dispName.cend(); iter ++)
     {
-        auto *func = iter.value();
-        QStringList parts = iter.key().split("/");
+        auto *func = iter.key();
+        QStringList parts = iter.value().split("/");
         QString name = parts.last();
         parts.pop_back();
         QMenu *tmpMenu = rootElementMenu;

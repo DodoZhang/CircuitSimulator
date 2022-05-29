@@ -44,6 +44,7 @@ private:
     static QMap<QString, Element *(*)(EditorWidget *)> s_insFunc;
     // Qt suggested to use QHash here, which would cause error
     static QMap<Element *(*)(EditorWidget *), QString> s_eleName;
+    static QMap<Element *(*)(EditorWidget *), QString> s_dispName;
 
 public:
     template<typename T>
@@ -52,14 +53,11 @@ public:
         return new T(widget);
     }
     template<typename T>
-    static void registerElement(QString name)
+    static void registerElement(QString name, QString displayName)
     {
         s_insFunc.insert(name, &instantiateElement<T>);
         s_eleName.insert(&instantiateElement<T>, name);
-    }
-    static const QMap<QString, Element *(*)(EditorWidget *)> &elementMap()
-    {
-        return s_insFunc;
+        s_dispName.insert(&instantiateElement<T>, displayName);
     }
     template<typename T>
     static QString elementName()
