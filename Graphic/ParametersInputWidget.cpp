@@ -36,7 +36,7 @@ ParametersInputWidget::ParametersInputWidget(QWidget *parent)
 
 ParametersInputWidget::~ParametersInputWidget()
 {
-    for (auto iter = m_items.begin(); iter != m_items.end(); iter ++) delete iter.value();
+
 }
 
 void ParametersInputWidget::addParameter(void *parameter, const QString &label,

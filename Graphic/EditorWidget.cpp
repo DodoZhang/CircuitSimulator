@@ -185,6 +185,8 @@ EditorWidget::~EditorWidget()
 {
     delete m_pixmap;
     delete m_inspector;
+    while (m_elements.count()) delete m_elements.first();
+    while (m_wires.count()) delete m_wires.first();
     for (auto iter = m_currentProbes.begin(); iter != m_currentProbes.end(); iter ++) delete *iter;
     for (auto iter = m_voltageProbes.begin(); iter != m_voltageProbes.end(); iter ++) delete *iter;
 }
@@ -710,8 +712,13 @@ void EditorWidget::wheelEvent(QWheelEvent *event)
     m_scale *= pow(2, event->angleDelta().y() / 480.0f);
     if (m_scale < 8) m_scale = 8;
     if (m_scale > 32) m_scale = 32;
+#if (QT_VERSION < QT_VERSION_CHECK(5, 14, 0))
+    m_posx += event->pos().x() / oriScale - event->pos().x() / m_scale;
+    m_posy += event->pos().y() / oriScale - event->pos().y() / m_scale;
+#else
     m_posx += event->position().x() / oriScale - event->position().x() / m_scale;
     m_posy += event->position().y() / oriScale - event->position().y() / m_scale;
+#endif
     update();
 }
 

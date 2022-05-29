@@ -71,6 +71,18 @@ MainWindow::MainWindow(QWidget *parent)
     fileMenu->addAction(tr("Open"), this, &MainWindow::openFile, QKeySequence::Open);
     fileMenu->addAction(tr("Save"), this, &MainWindow::saveFile, QKeySequence::Save);
     fileMenu->addAction(tr("Save As"), this, &MainWindow::saveAsFile, QKeySequence::SaveAs);
+    fileMenu->addSeparator();
+    QMenu *exampleMenu = new QMenu(tr("Open Example"), fileMenu);
+    exampleMenu->addAction(tr("Capacitor Inductor Characteristics"), this, [this]() {
+        openExample(tr("Capacitor Inductor Characteristics"), "CapacitorInductorCharacteristics.cir");
+    });
+    exampleMenu->addAction(tr("Full Bridge Rectifier"), this, [this]() {
+        openExample(tr("Full Bridge Rectifier"), "FullBridgeRectifier.cir");
+    });
+    exampleMenu->addAction(tr("MOSFET Amplifier Circuit"), this, [this]() {
+        openExample(tr("MOSFET Amplifier Circuit"), "MOSFETAmplifierCircuit.cir");
+    });
+    fileMenu->addMenu(exampleMenu);
     mb->addMenu(fileMenu);
 
     m_editor = new EditorWidget(this);
@@ -155,6 +167,7 @@ void MainWindow::deserialize(const QByteArray &bytes)
     m_iterateLevel = simJson["iterate level"].toInt();
     m_editor->fromJson(json["circuit"].toObject());
     m_oscilloscopeDock->oscilloscope()->fromJson(json["oscilloscope"].toObject());
+    m_inspectorDock->setWidget(m_editor->inspector());
 }
 
 void MainWindow::contextMenuEvent(QContextMenuEvent *event)
@@ -287,7 +300,24 @@ void MainWindow::openFile()
     setWindowTitle(fileName.left(fileName.lastIndexOf('.')) + tr(" - Circuit Simulator"));
 }
 
-void MainWindow::setLanguage(const QString language)
+void MainWindow::openExample(const QString &name, const QString &path)
+{
+    if (isSimulating())
+    {
+        stopSimulation();
+        delete m_circuit;
+        m_circuit = nullptr;
+        m_currentProbes.clear();
+        m_voltageProbes.clear();
+    }
+    QFile file(":/Examples/" + path);
+    m_hasFilePath = false;
+    file.open(QFile::ReadOnly | QIODevice::Text);
+    deserialize(file.readAll());
+    setWindowTitle(name + tr(" - Circuit Simulator"));
+}
+
+void MainWindow::setLanguage(const QString &language)
 {
     if (language == m_language) return;
     QMessageBox msgBox;

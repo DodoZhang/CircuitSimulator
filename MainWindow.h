@@ -90,7 +90,8 @@ public slots:
     void openFile();
 
 protected slots:
-    void setLanguage(const QString language);
+    void openExample(const QString &name, const QString &path);
+    void setLanguage(const QString &language);
     void loadSettings();
     void saveSettings();
 };

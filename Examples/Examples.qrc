@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/Examples">
+        <file>CapacitorInductorCharacteristics.cir</file>
+        <file>MOSFETAmplifierCircuit.cir</file>
+        <file>FullBridgeRectifier.cir</file>
+    </qresource>
+</RCC>
